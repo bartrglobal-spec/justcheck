@@ -1,5 +1,4 @@
 const express = require("express");
-const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -7,15 +6,20 @@ dotenv.config();
 const app = express();
 
 /**
- * CORS — explicit and early
+ * HARD CORS HEADERS — FORCE ON EVERY REQUEST
  */
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
-  })
-);
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle preflight immediately
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 /**
  * Middleware
@@ -33,7 +37,7 @@ app.get("/", (req, res) => {
 });
 
 /**
- * Explicit health endpoint
+ * Health endpoint
  */
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
