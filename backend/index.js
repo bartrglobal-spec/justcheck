@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -6,38 +7,23 @@ dotenv.config();
 const app = express();
 
 /**
- * STEP 1: FORCE CORS HEADERS (NO LIBRARIES)
- * This runs on EVERY request
+ * CORS — explicit and early
  */
-app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://justcheck.pages.dev"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET,POST,OPTIONS"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
-
-  // Handle preflight explicitly
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 /**
- * STEP 2: JSON parsing
+ * Middleware
  */
 app.use(express.json());
 
 /**
- * STEP 3: Root endpoint
+ * Root health check
  */
 app.get("/", (req, res) => {
   res.json({
@@ -47,14 +33,14 @@ app.get("/", (req, res) => {
 });
 
 /**
- * STEP 4: Health endpoint
+ * Explicit health endpoint
  */
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
 /**
- * STEP 5: Start server
+ * Render PORT
  */
 const PORT = process.env.PORT || 3000;
 
