@@ -1,53 +1,76 @@
 const express = require("express");
-const dotenv = require("dotenv");
-
-dotenv.config();
 
 const app = express();
-
-/**
- * HARD CORS HEADERS — FORCE ON EVERY REQUEST
- */
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Handle preflight immediately
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+const PORT = process.env.PORT || 3000;
 
 /**
  * Middleware
  */
 app.use(express.json());
 
+// HARD-LOCKED CORS (JustCheck principle: browser-safe, platform-agnostic)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 /**
  * Root health check
  */
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     status: "ok",
-    service: "justcheck-backend",
+    service: "justcheck-backend"
   });
 });
 
 /**
- * Health endpoint
+ * LOCKED /check API CONTRACT
+ * Pre-payment signal only — no judgment
  */
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+app.post("/check", (req, res) => {
+  const { input_type, input_value } = req.body;
+
+  // Contract validation
+  if (!input_type || !input_value) {
+    return res.status(400).json({
+      error: {
+        code: "INVALID_REQUEST",
+        message: "input_type and input_value are required"
+      }
+    });
+  }
+
+  // Stubbed signal response (brain placeholder)
+  return res.status(200).json({
+    signal: {
+      level: "green",
+      confidence_score: 0.15,
+      summary: "Limited signals available at this time."
+    },
+    indicators: {
+      positive: [],
+      neutral: [],
+      negative: []
+    },
+    meta: {
+      version: "v1",
+      checked_at: new Date().toISOString(),
+      input_type: input_type
+    }
+  });
 });
 
 /**
- * Render PORT
+ * Start server
  */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`JustCheck backend listening on port ${PORT}`);
 });
