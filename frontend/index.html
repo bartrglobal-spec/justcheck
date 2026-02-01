@@ -3,52 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <title>JustCheck</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f7fb;
       padding: 40px;
     }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: #555;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 260px;
+      margin-right: 10px;
+    }
+
     button {
       padding: 12px 20px;
       font-size: 16px;
       cursor: pointer;
     }
+
     pre {
       margin-top: 20px;
-      background: #fff;
+      background: #ffffff;
       padding: 15px;
       border-radius: 6px;
+      border: 1px solid #ddd;
+      max-width: 600px;
+      overflow-x: auto;
     }
   </style>
 </head>
+
 <body>
 
   <h1>JustCheck</h1>
-  <p>Frontend → Backend connectivity test</p>
+  <p>Pre-payment trust signal (live backend)</p>
 
-  <button onclick="pingBackend()">Ping Backend</button>
+  <input
+    id="inputValue"
+    type="text"
+    placeholder="Enter phone number"
+  />
+
+  <button onclick="runCheck()">Run Check</button>
 
   <pre id="result">Waiting…</pre>
 
   <script>
-    async function pingBackend() {
+    console.log("SCRIPT LOADED");
+
+    async function runCheck() {
+      console.log("BUTTON CLICKED");
+
       const result = document.getElementById("result");
-      result.textContent = "Pinging backend...";
+      const inputValue = document.getElementById("inputValue").value;
+
+      if (!inputValue || inputValue.trim() === "") {
+        result.textContent = "Please enter a phone number";
+        return;
+      }
+
+      const payload = {
+        input_type: "phone",
+        input_value: inputValue
+      };
+
+      result.textContent = "Running check...";
 
       try {
         const response = await fetch(
-          "https://justcheck-2-euii.onrender.com/"
+          "https://justcheck-2-euii.onrender.com/check",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }
         );
 
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-
         const data = await response.json();
+
+        console.log("API RESPONSE:", data);
+
         result.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
-        result.textContent = "ERROR: Could not reach backend\n" + err.message;
+        console.error("FETCH ERROR:", err);
+        result.textContent = "ERROR: Failed to reach backend";
       }
     }
   </script>
