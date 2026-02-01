@@ -32,14 +32,33 @@
       cursor: pointer;
     }
 
-    pre {
-      margin-top: 20px;
-      background: #ffffff;
-      padding: 15px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-      max-width: 600px;
-      overflow-x: auto;
+    .result-box {
+      margin-top: 25px;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      display: none;
+    }
+
+    .green {
+      background: #e6f4ea;
+      border: 1px solid #8fd19e;
+    }
+
+    .amber {
+      background: #fff4e5;
+      border: 1px solid #ffcc80;
+    }
+
+    .red {
+      background: #fdecea;
+      border: 1px solid #f5a5a5;
+    }
+
+    .signal-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -47,7 +66,7 @@
 <body>
 
   <h1>JustCheck</h1>
-  <p>Pre-payment trust signal (live backend)</p>
+  <p>Trust indicators before money moves</p>
 
   <input
     id="inputValue"
@@ -57,7 +76,10 @@
 
   <button onclick="runCheck()">Run Check</button>
 
-  <pre id="result">Waiting…</pre>
+  <div id="resultBox" class="result-box">
+    <div id="signalTitle" class="signal-title"></div>
+    <div id="signalSummary"></div>
+  </div>
 
   <script>
     console.log("SCRIPT LOADED");
@@ -65,11 +87,13 @@
     async function runCheck() {
       console.log("BUTTON CLICKED");
 
-      const result = document.getElementById("result");
       const inputValue = document.getElementById("inputValue").value;
+      const resultBox = document.getElementById("resultBox");
+      const signalTitle = document.getElementById("signalTitle");
+      const signalSummary = document.getElementById("signalSummary");
 
       if (!inputValue || inputValue.trim() === "") {
-        result.textContent = "Please enter a phone number";
+        alert("Please enter a phone number");
         return;
       }
 
@@ -78,7 +102,8 @@
         input_value: inputValue
       };
 
-      result.textContent = "Running check...";
+      resultBox.style.display = "none";
+      resultBox.className = "result-box";
 
       try {
         const response = await fetch(
@@ -93,13 +118,28 @@
         );
 
         const data = await response.json();
-
         console.log("API RESPONSE:", data);
 
-        result.textContent = JSON.stringify(data, null, 2);
+        const level = data.signal.level;
+        const summary = data.signal.summary;
+
+        // Apply signal styling
+        resultBox.classList.add(level);
+
+        if (level === "green") {
+          signalTitle.textContent = "Low Risk Indicators";
+        } else if (level === "amber") {
+          signalTitle.textContent = "Some Risk Indicators";
+        } else if (level === "red") {
+          signalTitle.textContent = "Elevated Risk Indicators";
+        }
+
+        signalSummary.textContent = summary;
+        resultBox.style.display = "block";
+
       } catch (err) {
         console.error("FETCH ERROR:", err);
-        result.textContent = "ERROR: Failed to reach backend";
+        alert("Could not complete check. Please try again.");
       }
     }
   </script>
