@@ -9,56 +9,59 @@
       font-family: Arial, sans-serif;
       background: #f5f7fb;
       padding: 40px;
+      color: #111;
     }
 
     h1 {
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
-    p {
+    .subtitle {
       color: #555;
+      margin-bottom: 20px;
     }
 
     input {
-      padding: 10px;
+      padding: 12px;
       font-size: 16px;
-      width: 260px;
-      margin-right: 10px;
+      width: 240px;
     }
 
     button {
       padding: 12px 20px;
       font-size: 16px;
+      margin-left: 10px;
       cursor: pointer;
     }
 
-    .result-box {
-      margin-top: 25px;
+    .signal-box {
+      margin-top: 30px;
       padding: 20px;
       border-radius: 8px;
-      max-width: 500px;
-      display: none;
+      background: #fff;
+      border-left: 6px solid #ccc;
     }
 
-    .green {
-      background: #e6f4ea;
-      border: 1px solid #8fd19e;
+    .signal-green {
+      border-left-color: #2ecc71;
     }
 
-    .amber {
-      background: #fff4e5;
-      border: 1px solid #ffcc80;
+    .signal-amber {
+      border-left-color: #f39c12;
     }
 
-    .red {
-      background: #fdecea;
-      border: 1px solid #f5a5a5;
+    .signal-red {
+      border-left-color: #e74c3c;
     }
 
     .signal-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+    }
+
+    .signal-desc {
+      color: #555;
     }
   </style>
 </head>
@@ -66,20 +69,12 @@
 <body>
 
   <h1>JustCheck</h1>
-  <p>Trust indicators before money moves</p>
+  <div class="subtitle">Trust indicators before money moves</div>
 
-  <input
-    id="inputValue"
-    type="text"
-    placeholder="Enter phone number"
-  />
-
+  <input id="inputValue" placeholder="0647470911" />
   <button onclick="runCheck()">Run Check</button>
 
-  <div id="resultBox" class="result-box">
-    <div id="signalTitle" class="signal-title"></div>
-    <div id="signalSummary"></div>
-  </div>
+  <div id="output"></div>
 
   <script>
     console.log("SCRIPT LOADED");
@@ -87,59 +82,41 @@
     async function runCheck() {
       console.log("BUTTON CLICKED");
 
-      const inputValue = document.getElementById("inputValue").value;
-      const resultBox = document.getElementById("resultBox");
-      const signalTitle = document.getElementById("signalTitle");
-      const signalSummary = document.getElementById("signalSummary");
+      const value = document.getElementById("inputValue").value.trim();
+      const output = document.getElementById("output");
 
-      if (!inputValue || inputValue.trim() === "") {
-        alert("Please enter a phone number");
+      if (!value) {
+        output.innerHTML = "<p>Please enter a number or reference.</p>";
         return;
       }
 
-      const payload = {
-        input_type: "phone",
-        input_value: inputValue
-      };
-
-      resultBox.style.display = "none";
-      resultBox.className = "result-box";
+      output.innerHTML = "<p>Checking…</p>";
 
       try {
         const response = await fetch(
-          "https://justcheck-2-euii.onrender.com/check",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          }
+          "https://justcheck-2-euii.onrender.com/check?value=" + encodeURIComponent(value)
         );
 
         const data = await response.json();
         console.log("API RESPONSE:", data);
 
-        const level = data.signal.level;
-        const summary = data.signal.summary;
+        const level = data.signal.level;   // green | amber | red
+        const title = data.signal.title;
+        const description = data.signal.description;
 
-        // Apply signal styling
-        resultBox.classList.add(level);
+        let colorClass = "signal-green";
+        if (level === "amber") colorClass = "signal-amber";
+        if (level === "red") colorClass = "signal-red";
 
-        if (level === "green") {
-          signalTitle.textContent = "Low Risk Indicators";
-        } else if (level === "amber") {
-          signalTitle.textContent = "Some Risk Indicators";
-        } else if (level === "red") {
-          signalTitle.textContent = "Elevated Risk Indicators";
-        }
-
-        signalSummary.textContent = summary;
-        resultBox.style.display = "block";
-
+        output.innerHTML = `
+          <div class="signal-box ${colorClass}">
+            <div class="signal-title">${title}</div>
+            <div class="signal-desc">${description}</div>
+          </div>
+        `;
       } catch (err) {
-        console.error("FETCH ERROR:", err);
-        alert("Could not complete check. Please try again.");
+        output.innerHTML = "<p>Error running check.</p>";
+        console.error(err);
       }
     }
   </script>
