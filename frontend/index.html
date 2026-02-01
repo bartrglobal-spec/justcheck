@@ -42,17 +42,9 @@
       border-left: 6px solid #ccc;
     }
 
-    .signal-green {
-      border-left-color: #2ecc71;
-    }
-
-    .signal-amber {
-      border-left-color: #f39c12;
-    }
-
-    .signal-red {
-      border-left-color: #e74c3c;
-    }
+    .signal-green { border-left-color: #2ecc71; }
+    .signal-amber { border-left-color: #f39c12; }
+    .signal-red { border-left-color: #e74c3c; }
 
     .signal-title {
       font-size: 20px;
@@ -94,13 +86,27 @@
 
       try {
         const response = await fetch(
-          "https://justcheck-2-euii.onrender.com/check?value=" + encodeURIComponent(value)
+          "https://justcheck-2-euii.onrender.com/check",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              input_type: "phone",
+              input_value: value
+            })
+          }
         );
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
 
         const data = await response.json();
         console.log("API RESPONSE:", data);
 
-        const level = data.signal.level;   // green | amber | red
+        const level = data.signal.level;
         const title = data.signal.title;
         const description = data.signal.description;
 
