@@ -107,17 +107,25 @@
         console.log("API RESPONSE:", data);
 
         const level = data.signal.level;
-        const title = data.signal.title;
-        const description = data.signal.description;
+        const summary = data.signal.summary;
 
         let colorClass = "signal-green";
-        if (level === "amber") colorClass = "signal-amber";
-        if (level === "red") colorClass = "signal-red";
+        let label = "Low Risk Indicators";
+
+        if (level === "amber") {
+          colorClass = "signal-amber";
+          label = "Some Risk Indicators";
+        }
+
+        if (level === "red") {
+          colorClass = "signal-red";
+          label = "Elevated Risk Indicators";
+        }
 
         output.innerHTML = `
           <div class="signal-box ${colorClass}">
-            <div class="signal-title">${title}</div>
-            <div class="signal-desc">${description}</div>
+            <div class="signal-title">${label}</div>
+            <div class="signal-desc">${summary}</div>
           </div>
         `;
       } catch (err) {
