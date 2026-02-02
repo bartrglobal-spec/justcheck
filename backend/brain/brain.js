@@ -7,9 +7,8 @@ function runBrain(rawInput) {
   console.log("🧠 Brain started — V1");
 
   const input = normalizeInput(rawInput);
-  console.log("Normalized input:", input);
 
-  const triggered = [];
+  let triggeredCount = 0;
   let score = 0;
 
   for (const indicator of indicators) {
@@ -18,20 +17,20 @@ function runBrain(rawInput) {
     }
 
     const weight = Number(indicator.weight) || 0;
-
-    console.log(`➡️ Checking indicator: ${indicator.id}`);
     const result = indicator.run(input);
-    console.log(`   Result for ${indicator.id}:`, result);
 
     if (result === true) {
-      triggered.push(indicator.id);
+      triggeredCount += 1;
       score += weight;
     }
   }
 
-  console.log("Final score:", score);
+  console.log("🧠 Brain completed", {
+    triggeredCount,
+    scoreComputed: true
+  });
 
-  return { triggered, score };
+  return { triggeredCount, score };
 }
 
 module.exports = { runBrain };
