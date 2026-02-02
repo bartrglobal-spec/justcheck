@@ -1,76 +1,56 @@
 const express = require("express");
+const bodyParser = require("body-parser");
+
+const { runBrain } = require("./brain");
+const { guardInput } = require("./brain/guard");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
+
+app.use(bodyParser.json());
 
 /**
- * Middleware
- */
-app.use(express.json());
-
-// HARD-LOCKED CORS (JustCheck principle: browser-safe, platform-agnostic)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-/**
- * Root health check
- */
-app.get("/", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "justcheck-backend"
-  });
-});
-
-/**
- * LOCKED /check API CONTRACT
- * Pre-payment signal only — no judgment
+ * POST /check
+ * Entry point for JustCheck
  */
 app.post("/check", (req, res) => {
-  const { input_type, input_value } = req.body;
+  // 🛡️ Guard layer (pre-brain)
+  const guard = guardInput(req.body);
 
-  // Contract validation
-  if (!input_type || !input_value) {
-    return res.status(400).json({
-      error: {
-        code: "INVALID_REQUEST",
-        message: "input_type and input_value are required"
+  if (!guard.allowed) {
+    return res.json({
+      signal: {
+        level: "green",
+        summary: "Low Risk Indicators"
+      },
+      indicators: [],
+      meta: {
+        brain_version: "v1",
+        guard: guard.reason
       }
     });
   }
 
-  // Stubbed signal response (brain placeholder)
-  return res.status(200).json({
-    signal: {
-      level: "green",
-      confidence_score: 0.15,
-      summary: "Limited signals available at this time."
-    },
-    indicators: {
-      positive: [],
-      neutral: [],
-      negative: []
-    },
+  // 🧠 Brain execution
+  const result = runBrain(req.body);
+
+  return res.json({
+    signal: result.signal,
+    indicators: result.indicators,
     meta: {
-      version: "v1",
-      checked_at: new Date().toISOString(),
-      input_type: input_type
+      brain_version: "v1"
     }
   });
 });
 
 /**
- * Start server
+ * Health check
  */
+app.get("/", (req, res) => {
+  res.send("JustCheck backend running");
+});
+
 app.listen(PORT, () => {
-  console.log(`JustCheck backend listening on port ${PORT}`);
+  console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
+  console.log(`JustCheck backend running on port ${PORT}`);
 });
