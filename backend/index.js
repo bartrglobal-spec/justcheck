@@ -1,21 +1,43 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const { Pool } = require("pg");
 
 const { runBrain } = require("./brain");
 const { guardInput } = require("./brain/guard/index");
 
 const app = express();
 
-// 🔐 Environment awareness (no logic branching)
+// 🔐 Environment awareness
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
+const DATABASE_URL = process.env.DATABASE_URL;
+
+// ---- DATABASE CONNECTION (READ-ONLY TEST) ----
+let dbReady = false;
+
+if (DATABASE_URL) {
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  pool
+    .query("SELECT 1")
+    .then(() => {
+      dbReady = true;
+      console.log("✅ Database connection test passed");
+    })
+    .catch((err) => {
+      console.error("❌ Database connection test failed");
+      console.error(err.message);
+    });
+} else {
+  console.log("⚠️ DATABASE_URL not set");
+}
+// --------------------------------------------
 
 app.use(bodyParser.json());
 
-/**
- * POST /check
- * Entry point for JustCheck
- */
 app.post("/check", (req, res) => {
   const guard = guardInput(req.body);
 
@@ -44,9 +66,6 @@ app.post("/check", (req, res) => {
   });
 });
 
-/**
- * Health check
- */
 app.get("/", (req, res) => {
   res.send("JustCheck backend running");
 });
