@@ -5,7 +5,9 @@ const { runBrain } = require("./brain");
 const { guardInput } = require("./brain/guard");
 
 const app = express();
-const PORT = 3000;
+
+// 🔐 ENV-AWARE PORT (dev-safe default)
+const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
