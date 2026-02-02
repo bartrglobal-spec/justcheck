@@ -6,8 +6,9 @@ const { guardInput } = require("./brain/guard");
 
 const app = express();
 
-// 🔐 ENV-AWARE PORT (dev-safe default)
+// 🔐 Environment awareness (no logic branching)
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 app.use(bodyParser.json());
 
@@ -54,5 +55,6 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
+  console.log(`Environment: ${NODE_ENV}`);
   console.log(`JustCheck backend running on port ${PORT}`);
 });
