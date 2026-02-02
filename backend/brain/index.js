@@ -1,19 +1,72 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+
 const { runBrain } = require("./brain");
-const buildSignal = require("./signal");
+const { guardInput } = require("./brain/guard");
+
+const app = express();
+
+// 🔐 Environment awareness (no logic branching)
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+app.use(bodyParser.json());
 
 /**
- * Public brain entrypoint
- * Enforces output contract (D4 + D5 locked)
+ * POST /check
+ * Entry point for JustCheck
  */
-function executeBrain(rawInput) {
-  const { triggered, score } = runBrain(rawInput);
+app.post("/check", (req, res) => {
+  // 🛡️ Guard layer (pre-brain)
+  const guard = guardInput(req.body);
 
-  const signal = buildSignal(score);
+  if (!guard.allowed) {
+    return res.json({
+      signal: {
+        level: "green",
+        summary: "Low Risk Indicators"
+      },
+      indicators: [],
+      meta: {
+        brain_version: "v1",
+        guard: guard.reason
+      }
+    });
+  }
 
-  return {
-    signal,
-    indicators: triggered
-  };
-}
+  // 🧠 Brain execution
+  const result = runBrain(req.body);
 
-module.exports = executeBrain;
+  return res.json({
+    signal: result.signal,
+    indicators: result.indicators,
+    meta: {
+      brain_version: "v1"
+    }
+  });
+});
+
+/**
+ * Health check (infrastructure only)
+ * No brain, no indicators, no state
+ */
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "justcheck-backend",
+    env: NODE_ENV
+  });
+});
+
+/**
+ * Root (human-readable)
+ */
+app.get("/", (req, res) => {
+  res.send("JustCheck backend running");
+});
+
+app.listen(PORT, () => {
+  console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
+  console.log(`Environment: ${NODE_ENV}`);
+  console.log(`JustCheck backend running on port ${PORT}`);
+});
