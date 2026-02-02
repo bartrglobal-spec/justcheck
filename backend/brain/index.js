@@ -1,21 +1,19 @@
-/**
- * Brain Entry Point
- * Public interface for JustCheck brain execution
- */
-
 const { runBrain } = require("./brain");
+const buildSignal = require("./signal");
 
 /**
- * executeBrain
- * Stable wrapper to isolate internal brain logic
- *
- * @param {Object} input - Raw request payload
- * @returns {Object} - Brain result
+ * Public brain entrypoint
+ * Enforces output contract (D4 + D5 locked)
  */
-function executeBrain(input) {
-  return runBrain(input);
+function executeBrain(rawInput) {
+  const { triggered, score } = runBrain(rawInput);
+
+  const signal = buildSignal(score);
+
+  return {
+    signal,
+    indicators: triggered
+  };
 }
 
-module.exports = {
-  executeBrain
-};
+module.exports = executeBrain;
