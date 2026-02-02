@@ -12,29 +12,24 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// ---- DATABASE CONNECTION (READ-ONLY TEST) ----
-let dbReady = false;
+// ---- DATABASE INIT ----
+let pool = null;
 
-if (DATABASE_URL) {
-  const pool = new Pool({
+async function initDB() {
+  if (!DATABASE_URL) {
+    console.log("⚠️ DATABASE_URL not set — running without DB");
+    return;
+  }
+
+  pool = new Pool({
     connectionString: DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
-  pool
-    .query("SELECT 1")
-    .then(() => {
-      dbReady = true;
-      console.log("✅ Database connection test passed");
-    })
-    .catch((err) => {
-      console.error("❌ Database connection test failed");
-      console.error(err.message);
-    });
-} else {
-  console.log("⚠️ DATABASE_URL not set");
+  await pool.query("SELECT 1");
+  console.log("✅ Database connection test passed");
 }
-// --------------------------------------------
+// -----------------------
 
 app.use(bodyParser.json());
 
@@ -70,8 +65,22 @@ app.get("/", (req, res) => {
   res.send("JustCheck backend running");
 });
 
-app.listen(PORT, () => {
-  console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
-  console.log(`Environment: ${NODE_ENV}`);
-  console.log(`JustCheck backend running on port ${PORT}`);
-});
+// ---- CONTROLLED STARTUP ----
+async function startServer() {
+  try {
+    await initDB();
+
+    app.listen(PORT, () => {
+      console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
+      console.log(`Environment: ${NODE_ENV}`);
+      console.log(`JustCheck backend running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Failed to start server");
+    console.error(err.message);
+    process.exit(1);
+  }
+}
+
+startServer();
+// ----------------------------
