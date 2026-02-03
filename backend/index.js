@@ -17,7 +17,6 @@ app.get('/', (req, res) => {
 
 /**
  * POST /checks
- * Creates a new check entry
  */
 app.post('/checks', async (req, res) => {
   try {
@@ -38,14 +37,13 @@ app.post('/checks', async (req, res) => {
 
     res.json({ id: result.rows[0].id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('POST /checks error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
- * GET /checks
- * Lookup existing checks and attach confidence gradient
+ * GET /checks — DEBUG INSTRUMENTED
  */
 app.get('/checks', async (req, res) => {
   try {
@@ -92,8 +90,11 @@ app.get('/checks', async (req, res) => {
       confidence
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('GET /checks error:', err);
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack
+    });
   }
 });
 
