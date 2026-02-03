@@ -1,111 +1,68 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const bodyParser = require("body-parser");
 
-const { initDatabase } = require('./db');
-const { normalizeIdentifier } = require('./utils');
-const { deriveConfidence } = require('./brain/confidence');
+const { normalizeIdentifier } = require("./utils/identifierNormalization");
+const db = require("./db"); // ✅ FIX: db comes from /db/index.js
+const { deriveConfidence } = require("./brain");
 
 const app = express();
 app.use(bodyParser.json());
 
 /**
- * Health check (Render)
+ * Health check
  */
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
 });
 
 /**
- * POST /checks
+ * Core check endpoint
  */
-app.post('/checks', async (req, res) => {
-  try {
-    const { identifier, identifier_type } = req.body;
-
-    if (!identifier || !identifier_type) {
-      return res.status(400).json({ error: 'Missing identifier or identifier_type' });
-    }
-
-    const normalized = normalizeIdentifier(identifier, identifier_type);
-
-    const result = await global.db.query(
-      `INSERT INTO checks (identifier, identifier_type)
-       VALUES ($1, $2)
-       RETURNING id`,
-      [normalized, identifier_type]
-    );
-
-    res.json({ id: result.rows[0].id });
-  } catch (err) {
-    console.error('POST /checks error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * GET /checks — DEBUG INSTRUMENTED
- */
-app.get('/checks', async (req, res) => {
+app.get("/checks", async (req, res) => {
   try {
     const { identifier, identifier_type } = req.query;
 
     if (!identifier || !identifier_type) {
-      return res.status(400).json({ error: 'Missing identifier or identifier_type' });
+      return res.status(400).json({
+        error: "Missing identifier or identifier_type",
+      });
     }
 
     const normalized = normalizeIdentifier(identifier, identifier_type);
 
-    const result = await global.db.query(
-      `SELECT
-         identifier,
-         identifier_type,
-         COUNT(*) AS count,
-         MIN(created_at) AS first_seen
-       FROM checks
-       WHERE identifier = $1 AND identifier_type = $2
-       GROUP BY identifier, identifier_type`,
+    const result = await db.query(
+      `
+      SELECT
+        COUNT(*)::int AS count,
+        MIN(created_at) AS first_seen
+      FROM checks
+      WHERE identifier = $1
+        AND identifier_type = $2
+    `,
       [normalized, identifier_type]
     );
 
-    let payload;
-
-    if (result.rows.length === 0) {
-      payload = {
-        identifier: normalized,
-        identifier_type,
-        count: 0,
-        first_seen: null
-      };
-    } else {
-      payload = result.rows[0];
-    }
-
     const confidence = deriveConfidence({
-      count: Number(payload.count),
-      firstSeen: payload.first_seen
+      count: result.rows[0].count,
+      firstSeen: result.rows[0].first_seen,
     });
 
     res.json({
-      ...payload,
-      confidence
+      identifier: normalized,
+      identifier_type,
+      count: result.rows[0].count,
+      first_seen: result.rows[0].first_seen,
+      confidence,
     });
   } catch (err) {
-    console.error('GET /checks error:', err);
     res.status(500).json({
       error: err.message,
-      stack: err.stack
+      stack: err.stack,
     });
   }
 });
 
-/**
- * Bootstrap server
- */
-async function start() {
-  await initDatabase();
-
-  const PORT = process.env.PORT || 10000;
-  app.listen(PORT);
-}
-
-start();
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`[BOOT] Server listening on port ${PORT}`);
+});
