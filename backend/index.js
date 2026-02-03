@@ -1,24 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
-console.log('[BOOT] Starting JustCheck backend…');
-
 const { initDatabase } = require('./db');
 const { normalizeIdentifier } = require('./utils');
-
-console.log('[BOOT] Imports loaded');
 
 const app = express();
 app.use(bodyParser.json());
 
-app.get('/', (_req, res) => {
-  res.status(200).send('OK');
-});
-
-console.log('[BOOT] Express initialized');
-
 /**
  * POST /checks
+ * Creates a new check entry
  */
 app.post('/checks', async (req, res) => {
   try {
@@ -39,13 +30,14 @@ app.post('/checks', async (req, res) => {
 
     res.json({ id: result.rows[0].id });
   } catch (err) {
-    console.error('[POST /checks ERROR]', err);
+    console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
  * GET /checks
+ * Lookup existing checks
  */
 app.get('/checks', async (req, res) => {
   try {
@@ -61,8 +53,8 @@ app.get('/checks', async (req, res) => {
       `SELECT
          identifier,
          identifier_type,
-         COUNT(*) as count,
-         MIN(created_at) as first_seen
+         COUNT(*) AS count,
+         MIN(created_at) AS first_seen
        FROM checks
        WHERE identifier = $1 AND identifier_type = $2
        GROUP BY identifier, identifier_type`,
@@ -80,30 +72,19 @@ app.get('/checks', async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('[GET /checks ERROR]', err);
+    console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
- * Bootstrap
+ * Bootstrap server
  */
 async function start() {
-  try {
-    console.log('[BOOT] Initializing database…');
-    await initDatabase();
-    console.log('[BOOT] Database ready');
+  await initDatabase();
 
-    const PORT = process.env.PORT;
-    console.log('[BOOT] Starting server on port', PORT);
-
-    app.listen(PORT, () => {
-      console.log('[BOOT] Server listening on port', PORT);
-    });
-  } catch (err) {
-    console.error('[BOOT FATAL]', err);
-    process.exit(1);
-  }
+  const PORT = process.env.PORT || 10000;
+  app.listen(PORT);
 }
 
 start();
