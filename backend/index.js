@@ -1,8 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const { normalizeIdentifier } = require("./utils"); // ✅ FIXED: utils is a file
-const db = require("./db");
+const { normalizeIdentifier } = require("./utils"); // utils is a FILE
+const { pool } = require("./db"); // ✅ db exports a pool
 const { deriveConfidence } = require("./brain");
 
 const app = express();
@@ -30,7 +30,7 @@ app.get("/checks", async (req, res) => {
 
     const normalized = normalizeIdentifier(identifier, identifier_type);
 
-    const result = await db.query(
+    const result = await pool.query(
       `
       SELECT
         COUNT(*)::int AS count,
