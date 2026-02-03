@@ -1,15 +1,24 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+console.log('[BOOT] Starting JustCheck backend…');
+
 const { initDatabase } = require('./db');
 const { normalizeIdentifier } = require('./utils');
+
+console.log('[BOOT] Imports loaded');
 
 const app = express();
 app.use(bodyParser.json());
 
+app.get('/', (_req, res) => {
+  res.status(200).send('OK');
+});
+
+console.log('[BOOT] Express initialized');
+
 /**
  * POST /checks
- * Creates a new check entry
  */
 app.post('/checks', async (req, res) => {
   try {
@@ -30,14 +39,13 @@ app.post('/checks', async (req, res) => {
 
     res.json({ id: result.rows[0].id });
   } catch (err) {
-    console.error(err);
+    console.error('[POST /checks ERROR]', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
  * GET /checks
- * Lookup existing checks
  */
 app.get('/checks', async (req, res) => {
   try {
@@ -72,21 +80,30 @@ app.get('/checks', async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
+    console.error('[GET /checks ERROR]', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 /**
- * Bootstrap server
+ * Bootstrap
  */
 async function start() {
-  await initDatabase();
+  try {
+    console.log('[BOOT] Initializing database…');
+    await initDatabase();
+    console.log('[BOOT] Database ready');
 
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`JustCheck backend running on port ${PORT}`);
-  });
+    const PORT = process.env.PORT;
+    console.log('[BOOT] Starting server on port', PORT);
+
+    app.listen(PORT, () => {
+      console.log('[BOOT] Server listening on port', PORT);
+    });
+  } catch (err) {
+    console.error('[BOOT FATAL]', err);
+    process.exit(1);
+  }
 }
 
 start();
