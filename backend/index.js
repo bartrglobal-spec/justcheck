@@ -3,12 +3,13 @@ const bodyParser = require('body-parser');
 
 const { initDatabase } = require('./db');
 const { normalizeIdentifier } = require('./utils');
+const { deriveConfidence } = require('./brain/confidence');
 
 const app = express();
 app.use(bodyParser.json());
 
 /**
- * Health check (required by Render)
+ * Health check (Render)
  */
 app.get('/', (req, res) => {
   res.status(200).send('OK');
@@ -44,7 +45,7 @@ app.post('/checks', async (req, res) => {
 
 /**
  * GET /checks
- * Lookup existing checks
+ * Lookup existing checks and attach confidence gradient
  */
 app.get('/checks', async (req, res) => {
   try {
@@ -68,16 +69,28 @@ app.get('/checks', async (req, res) => {
       [normalized, identifier_type]
     );
 
+    let payload;
+
     if (result.rows.length === 0) {
-      return res.json({
+      payload = {
         identifier: normalized,
         identifier_type,
         count: 0,
         first_seen: null
-      });
+      };
+    } else {
+      payload = result.rows[0];
     }
 
-    res.json(result.rows[0]);
+    const confidence = deriveConfidence({
+      count: Number(payload.count),
+      firstSeen: payload.first_seen
+    });
+
+    res.json({
+      ...payload,
+      confidence
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
