@@ -19,9 +19,6 @@ async function start() {
     process.exit(1);
   }
 
-  /**
-   * Create a new check (POST)
-   */
   app.post("/checks", async (req, res) => {
     const { identifier, identifier_type } = req.body;
 
@@ -41,9 +38,6 @@ async function start() {
     res.json({ id: result.rows[0].id });
   });
 
-  /**
-   * Fetch check stats + signal (GET)
-   */
   app.get("/checks", async (req, res) => {
     const { identifier, identifier_type } = req.query;
 
