@@ -1,36 +1,20 @@
-console.log("🔥🔥🔥 NEW BRAIN FILE LOADED 🔥🔥🔥");
+/**
+ * Pure internal confidence derivation engine
+ * No IO, no DB, deterministic only
+ */
 
-const normalizeInput = require("./normalize/input");
-const indicators = require("./indicators/v1");
-
-function runBrain(rawInput) {
-  console.log("🧠 Brain started — V1");
-
-  const input = normalizeInput(rawInput);
-
-  let triggeredCount = 0;
-  let score = 0;
-
-  for (const indicator of indicators) {
-    if (!indicator || typeof indicator.run !== "function") {
-      throw new Error("Invalid indicator contract");
-    }
-
-    const weight = Number(indicator.weight) || 0;
-    const result = indicator.run(input);
-
-    if (result === true) {
-      triggeredCount += 1;
-      score += weight;
-    }
+function deriveConfidence({ count, firstSeen }) {
+  if (!count || count === 0) {
+    return "low";
   }
 
-  console.log("🧠 Brain completed", {
-    triggeredCount,
-    scoreComputed: true
-  });
+  if (count < 3) {
+    return "medium";
+  }
 
-  return { triggeredCount, score };
+  return "high";
 }
 
-module.exports = { runBrain };
+module.exports = {
+  deriveConfidence,
+};
