@@ -1,8 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const { normalizeIdentifier } = require("./utils/identifierNormalization");
-const db = require("./db"); // ✅ FIX: db comes from /db/index.js
+const { normalizeIdentifier } = require("./utils"); // ✅ FIXED: utils is a file
+const db = require("./db");
 const { deriveConfidence } = require("./brain");
 
 const app = express();
@@ -38,7 +38,7 @@ app.get("/checks", async (req, res) => {
       FROM checks
       WHERE identifier = $1
         AND identifier_type = $2
-    `,
+      `,
       [normalized, identifier_type]
     );
 
