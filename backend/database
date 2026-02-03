@@ -1,62 +1,80 @@
 BEGIN;
 
+-- This enables UUID generation (safe, standard, required)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =========================
 -- CHECKS
 -- =========================
+-- One row per paid check request
 CREATE TABLE checks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    -- What the user typed
     query_input TEXT NOT NULL,
+
+    -- Amount paid (in cents)
     amount_cents INTEGER NOT NULL,
+
+    -- Currency (e.g. USD, EUR, ZAR)
     currency CHAR(3) NOT NULL,
-    risk_band TEXT NOT NULL CHECK (risk_band IN ('Green', 'Amber', 'Red'))
+
+    -- Result shown to the user
+    risk_band TEXT NOT NULL
+        CHECK (risk_band IN ('Green', 'Amber', 'Red'))
 );
 
 -- =========================
 -- IDENTIFIERS
 -- =========================
+-- Canonical identifiers used by the system
 CREATE TABLE identifiers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
     identifier_value TEXT NOT NULL,
-    identifier_type TEXT NOT NULL CHECK (
-        identifier_type IN (
+    identifier_type TEXT NOT NULL
+        CHECK (identifier_type IN (
             'phone',
             'business_name',
             'payment_reference',
             'url',
             'other'
-        )
-    ),
+        )),
+
     UNIQUE (identifier_value, identifier_type)
 );
 
 -- =========================
 -- CHECK_IDENTIFIERS
 -- =========================
+-- Links checks to identifiers
 CREATE TABLE check_identifiers (
     check_id UUID NOT NULL REFERENCES checks(id) ON DELETE CASCADE,
     identifier_id UUID NOT NULL REFERENCES identifiers(id) ON DELETE CASCADE,
+
     PRIMARY KEY (check_id, identifier_id)
 );
 
 -- =========================
 -- SIGNALS
 -- =========================
+-- Non-verdict indicators that influence confidence
 CREATE TABLE signals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
     identifier_id UUID NOT NULL REFERENCES identifiers(id) ON DELETE CASCADE,
-    signal_type TEXT NOT NULL CHECK (
-        signal_type IN (
+
+    signal_type TEXT NOT NULL
+        CHECK (signal_type IN (
             'user_report',
             'network_density',
             'velocity',
             'external_presence'
-        )
-    ),
+        )),
+
     weight INTEGER NOT NULL,
     description TEXT
 );
@@ -64,17 +82,19 @@ CREATE TABLE signals (
 -- =========================
 -- FEEDBACK_EVENTS
 -- =========================
+-- Optional post-transaction outcomes
 CREATE TABLE feedback_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
     check_id UUID NOT NULL REFERENCES checks(id) ON DELETE CASCADE,
-    outcome TEXT NOT NULL CHECK (
-        outcome IN (
+
+    outcome TEXT NOT NULL
+        CHECK (outcome IN (
             'successful',
             'problem',
             'unknown'
-        )
-    )
+        ))
 );
 
 COMMIT;
