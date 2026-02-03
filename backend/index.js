@@ -1,18 +1,17 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const normalizeIdentifier = require("./utils"); // utils is a FILE
+const normalizeIdentifier = require("./utils");
 const db = require("./db");
-const deriveConfidence = require("./brain"); // default export
 
 const app = express();
 app.use(bodyParser.json());
 
 /**
- * Health check
+ * Fingerprint / Health check
  */
 app.get("/", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).send("JUSTCHECK BACKEND v1.0 — RENDER CONFIRMED");
 });
 
 /**
@@ -42,17 +41,11 @@ app.get("/checks", async (req, res) => {
       [normalized, identifier_type]
     );
 
-    const confidence = deriveConfidence({
-      count: result.rows[0].count,
-      firstSeen: result.rows[0].first_seen,
-    });
-
     res.json({
       identifier: normalized,
       identifier_type,
       count: result.rows[0].count,
       first_seen: result.rows[0].first_seen,
-      confidence,
     });
   } catch (err) {
     res.status(500).json({
