@@ -18,7 +18,44 @@ app.get('/', (req, res) => {
 });
 
 /**
- * Create a check (MINIMAL WRITE)
+ * READ-ONLY: lookup checks by identifier
+ */
+app.get('/checks', async (req, res) => {
+  const { identifier, identifier_type } = req.query;
+
+  if (!identifier || !identifier_type) {
+    return res.status(400).json({
+      error: 'identifier and identifier_type are required',
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        COUNT(*)::int AS count,
+        MIN(created_at) AS first_seen
+      FROM checks
+      WHERE identifier = $1
+        AND identifier_type = $2
+      `,
+      [identifier, identifier_type]
+    );
+
+    res.json({
+      identifier,
+      identifier_type,
+      count: result.rows[0].count,
+      first_seen: result.rows[0].first_seen,
+    });
+  } catch (err) {
+    console.error('Failed to lookup checks:', err);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+/**
+ * WRITE: create a check (unchanged)
  */
 app.post('/checks', async (req, res) => {
   const { identifier, identifier_type } = req.body;
