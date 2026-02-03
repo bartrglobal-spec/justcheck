@@ -1,21 +1,22 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const db = require("./db");
 const normalizeIdentifier = require("./utils");
+const db = require("./db");
+const classifyConfidence = require("./confidence");
 
 const app = express();
 app.use(bodyParser.json());
 
 /**
- * Health check / fingerprint
+ * Health check
  */
 app.get("/", (req, res) => {
-  res.status(200).send("JUSTCHECK BACKEND v1.2 — CHECKS ENDPOINT RESTORED");
+  res.status(200).send("OK");
 });
 
 /**
- * Core checks endpoint (READ-ONLY)
+ * Core check endpoint
  */
 app.get("/checks", async (req, res) => {
   try {
@@ -41,11 +42,20 @@ app.get("/checks", async (req, res) => {
       [normalized, identifier_type]
     );
 
+    const count = result.rows[0].count;
+    const firstSeen = result.rows[0].first_seen;
+
+    const confidence = classifyConfidence({
+      count,
+      firstSeen,
+    });
+
     res.json({
       identifier: normalized,
       identifier_type,
-      count: result.rows[0].count,
-      first_seen: result.rows[0].first_seen,
+      total_checks: count,
+      first_seen: firstSeen,
+      confidence,
     });
   } catch (err) {
     res.status(500).json({
