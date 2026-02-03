@@ -1,7 +1,10 @@
-// backend/utils/identifierNormalization.js
+/**
+ * Normalize identifiers into a canonical form
+ * This module exports ONE function (default export)
+ */
 
-function normalizeIdentifier(identifier, identifierType) {
-  if (typeof identifier !== "string") {
+module.exports = function normalizeIdentifier(identifier, identifierType) {
+  if (!identifier || !identifierType) {
     return identifier;
   }
 
@@ -9,9 +12,9 @@ function normalizeIdentifier(identifier, identifierType) {
     return identifier.replace(/\s+/g, "");
   }
 
-  return identifier.trim().toLowerCase();
-}
+  if (identifierType === "email") {
+    return identifier.trim().toLowerCase();
+  }
 
-module.exports = {
-  normalizeIdentifier
+  return identifier.trim();
 };
