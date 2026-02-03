@@ -1,18 +1,11 @@
 // backend/index.js
 
-const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const { initDatabase, pool } = require(path.join(__dirname, "db"));
-const { deriveSignal } = require(
-  path.join(__dirname, "brain", "signalEngine.js")
-);
-
-// IMPORTANT: utils is at REPO ROOT, not inside backend
-const { normalizeIdentifier } = require(
-  path.join(__dirname, "..", "utils", "identifierNormalization.js")
-);
+const { initDatabase, pool } = require("./db");
+const { normalizeIdentifier } = require("./utils/identifierNormalization");
+const { deriveSignal } = require("./brain/signalEngine");
 
 const app = express();
 app.use(bodyParser.json());
