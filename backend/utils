@@ -1,0 +1,20 @@
+/**
+ * Normalize identifiers into a canonical form
+ * This module exports ONE function (default export)
+ */
+
+module.exports = function normalizeIdentifier(identifier, identifierType) {
+  if (!identifier || !identifierType) {
+    return identifier;
+  }
+
+  if (identifierType === "phone") {
+    return identifier.replace(/\s+/g, "");
+  }
+
+  if (identifierType === "email") {
+    return identifier.trim().toLowerCase();
+  }
+
+  return identifier.trim();
+};

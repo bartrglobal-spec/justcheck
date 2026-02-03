@@ -1,11 +1,16 @@
 /**
- * JUSTCHECK BRAIN — ENTRY POINT
- * Version: v1
- * Status: LOCKED
+ * Pure internal confidence derivation engine
+ * Deterministic, no side effects
  */
 
-const { runBrain } = require("./brain");
+module.exports = function deriveConfidence({ count, firstSeen }) {
+  if (!count || count === 0) {
+    return "low";
+  }
 
-module.exports = {
-  runBrain
+  if (count < 3) {
+    return "medium";
+  }
+
+  return "high";
 };

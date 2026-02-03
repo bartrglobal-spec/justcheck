@@ -1,0 +1,28 @@
+/**
+ * Confidence classification engine
+ *
+ * IMPORTANT:
+ * - This does NOT judge intent
+ * - This does NOT declare scams
+ * - This only signals observed risk indicators
+ *
+ * Output values are LOCKED:
+ * - green  = Low Risk Indicators
+ * - amber  = Some Risk Indicators
+ * - red    = Elevated Risk Indicators
+ */
+
+module.exports = function classifyConfidence({ count, firstSeen }) {
+  // Absolute baseline: no prior observations
+  if (!count || count === 0) {
+    return "green";
+  }
+
+  // Very limited history
+  if (count > 0 && count < 3) {
+    return "amber";
+  }
+
+  // Repeated appearances
+  return "red";
+};

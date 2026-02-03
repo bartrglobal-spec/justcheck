@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS checks (
+  id SERIAL PRIMARY KEY,
+  identifier TEXT NOT NULL,
+  identifier_type TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

@@ -9,7 +9,7 @@ const deriveConfidence = require("./brain");
 const app = express();
 
 /**
- * CORS — REQUIRED FOR BROWSER ACCESS
+ * CORS — allow browser-based frontend
  */
 app.use(
   cors({
