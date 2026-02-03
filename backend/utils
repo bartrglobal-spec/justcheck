@@ -1,121 +1,17 @@
-/**
- * Identifier Normalization
- * ------------------------
- * Pure functions only.
- * No I/O.
- * No database.
- * No environment variables.
- */
+// backend/utils/identifierNormalization.js
 
-/**
- * Normalize phone numbers into a canonical format.
- * - Removes spaces, dashes, brackets
- * - Preserves leading +
- * - Rejects obviously invalid input
- */
-function normalizePhone(input) {
-  if (!input || typeof input !== 'string') return null;
-
-  const cleaned = input
-    .trim()
-    .replace(/[^\d+]/g, '');
-
-  if (!cleaned.startsWith('+')) return null;
-  if (cleaned.length < 8) return null;
-
-  return cleaned;
-}
-
-/**
- * Normalize business names.
- * - Lowercase
- * - Trim
- * - Collapse whitespace
- * - Remove punctuation
- */
-function normalizeBusinessName(input) {
-  if (!input || typeof input !== 'string') return null;
-
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s]/g, '')
-    .replace(/\s+/g, ' ');
-}
-
-/**
- * Normalize payment references.
- * - Uppercase
- * - Trim
- * - Remove spaces
- */
-function normalizePaymentReference(input) {
-  if (!input || typeof input !== 'string') return null;
-
-  return input
-    .toUpperCase()
-    .trim()
-    .replace(/\s+/g, '');
-}
-
-/**
- * Normalize URLs.
- * - Lowercase
- * - Remove trailing slash
- */
-function normalizeUrl(input) {
-  if (!input || typeof input !== 'string') return null;
-
-  try {
-    const url = new URL(input.trim());
-    return url.origin + url.pathname.replace(/\/$/, '');
-  } catch {
-    return null;
+function normalizeIdentifier(identifier, identifierType) {
+  if (typeof identifier !== "string") {
+    return identifier;
   }
-}
 
-/**
- * Main dispatcher
- * Returns:
- * {
- *   identifier_type,
- *   identifier_value
- * }
- */
-function normalizeIdentifier(type, value) {
-  switch (type) {
-    case 'phone':
-      return {
-        identifier_type: 'phone',
-        identifier_value: normalizePhone(value),
-      };
-
-    case 'business_name':
-      return {
-        identifier_type: 'business_name',
-        identifier_value: normalizeBusinessName(value),
-      };
-
-    case 'payment_reference':
-      return {
-        identifier_type: 'payment_reference',
-        identifier_value: normalizePaymentReference(value),
-      };
-
-    case 'url':
-      return {
-        identifier_type: 'url',
-        identifier_value: normalizeUrl(value),
-      };
-
-    default:
-      return {
-        identifier_type: 'other',
-        identifier_value: value ? value.trim() : null,
-      };
+  if (identifierType === "phone") {
+    return identifier.replace(/\s+/g, "");
   }
+
+  return identifier.trim().toLowerCase();
 }
 
 module.exports = {
-  normalizeIdentifier,
+  normalizeIdentifier
 };
