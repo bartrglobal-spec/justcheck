@@ -8,6 +8,13 @@ const app = express();
 app.use(bodyParser.json());
 
 /**
+ * Health check (required by Render)
+ */
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
+/**
  * POST /checks
  * Creates a new check entry
  */
