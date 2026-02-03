@@ -1,0 +1,80 @@
+BEGIN;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- =========================
+-- CHECKS
+-- =========================
+CREATE TABLE checks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    query_input TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,
+    currency CHAR(3) NOT NULL,
+    risk_band TEXT NOT NULL CHECK (risk_band IN ('Green', 'Amber', 'Red'))
+);
+
+-- =========================
+-- IDENTIFIERS
+-- =========================
+CREATE TABLE identifiers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    identifier_value TEXT NOT NULL,
+    identifier_type TEXT NOT NULL CHECK (
+        identifier_type IN (
+            'phone',
+            'business_name',
+            'payment_reference',
+            'url',
+            'other'
+        )
+    ),
+    UNIQUE (identifier_value, identifier_type)
+);
+
+-- =========================
+-- CHECK_IDENTIFIERS
+-- =========================
+CREATE TABLE check_identifiers (
+    check_id UUID NOT NULL REFERENCES checks(id) ON DELETE CASCADE,
+    identifier_id UUID NOT NULL REFERENCES identifiers(id) ON DELETE CASCADE,
+    PRIMARY KEY (check_id, identifier_id)
+);
+
+-- =========================
+-- SIGNALS
+-- =========================
+CREATE TABLE signals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    identifier_id UUID NOT NULL REFERENCES identifiers(id) ON DELETE CASCADE,
+    signal_type TEXT NOT NULL CHECK (
+        signal_type IN (
+            'user_report',
+            'network_density',
+            'velocity',
+            'external_presence'
+        )
+    ),
+    weight INTEGER NOT NULL,
+    description TEXT
+);
+
+-- =========================
+-- FEEDBACK_EVENTS
+-- =========================
+CREATE TABLE feedback_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    check_id UUID NOT NULL REFERENCES checks(id) ON DELETE CASCADE,
+    outcome TEXT NOT NULL CHECK (
+        outcome IN (
+            'successful',
+            'problem',
+            'unknown'
+        )
+    )
+);
+
+COMMIT;
