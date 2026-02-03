@@ -1,34 +1,27 @@
-// backend/index.js
+const express = require('express');
+const bodyParser = require('body-parser');
 
-const express = require("express");
-const bodyParser = require("body-parser");
-
-const { initDatabase, pool } = require("./db");
-const { normalizeIdentifier } = require("./utils/identifierNormalization");
-const { deriveSignal } = require("./brain/signalEngine");
+const { initDatabase } = require('./db');
+const { normalizeIdentifier } = require('./utils');
 
 const app = express();
 app.use(bodyParser.json());
 
-async function start() {
+/**
+ * POST /checks
+ * Creates a new check entry
+ */
+app.post('/checks', async (req, res) => {
   try {
-    await initDatabase();
-    console.log("Database initialized");
-  } catch (err) {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  }
-
-  app.post("/checks", async (req, res) => {
     const { identifier, identifier_type } = req.body;
 
     if (!identifier || !identifier_type) {
-      return res.status(400).json({ error: "Missing identifier or identifier_type" });
+      return res.status(400).json({ error: 'Missing identifier or identifier_type' });
     }
 
     const normalized = normalizeIdentifier(identifier, identifier_type);
 
-    const result = await pool.query(
+    const result = await global.db.query(
       `INSERT INTO checks (identifier, identifier_type)
        VALUES ($1, $2)
        RETURNING id`,
@@ -36,60 +29,63 @@ async function start() {
     );
 
     res.json({ id: result.rows[0].id });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
-  app.get("/checks", async (req, res) => {
+/**
+ * GET /checks
+ * Lookup existing checks
+ */
+app.get('/checks', async (req, res) => {
+  try {
     const { identifier, identifier_type } = req.query;
 
     if (!identifier || !identifier_type) {
-      return res.status(400).json({ error: "Missing identifier or identifier_type" });
+      return res.status(400).json({ error: 'Missing identifier or identifier_type' });
     }
 
     const normalized = normalizeIdentifier(identifier, identifier_type);
 
-    const result = await pool.query(
-      `
-      SELECT
-        identifier,
-        identifier_type,
-        COUNT(*)::int AS count,
-        MIN(created_at) AS first_seen
-      FROM checks
-      WHERE identifier = $1 AND identifier_type = $2
-      GROUP BY identifier, identifier_type
-      `,
+    const result = await global.db.query(
+      `SELECT
+         identifier,
+         identifier_type,
+         COUNT(*) as count,
+         MIN(created_at) as first_seen
+       FROM checks
+       WHERE identifier = $1 AND identifier_type = $2
+       GROUP BY identifier, identifier_type`,
       [normalized, identifier_type]
     );
 
     if (result.rows.length === 0) {
-      const signal = deriveSignal({ count: 0 });
-
       return res.json({
         identifier: normalized,
         identifier_type,
         count: 0,
-        signal
+        first_seen: null
       });
     }
 
-    const row = result.rows[0];
-    const signal = deriveSignal({
-      count: row.count,
-      first_seen: row.first_seen
-    });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
-    res.json({
-      identifier: row.identifier,
-      identifier_type: row.identifier_type,
-      count: row.count,
-      first_seen: row.first_seen,
-      signal
-    });
-  });
+/**
+ * Bootstrap server
+ */
+async function start() {
+  await initDatabase();
 
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`JustCheck backend listening on port ${port}`);
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`JustCheck backend running on port ${PORT}`);
   });
 }
 
