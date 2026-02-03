@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 const db = require("./db");
+const normalizeIdentifier = require("./utils");
 
 const app = express();
 app.use(bodyParser.json());
@@ -10,31 +11,44 @@ app.use(bodyParser.json());
  * Health check / fingerprint
  */
 app.get("/", (req, res) => {
-  res.status(200).send("JUSTCHECK BACKEND v1.1 — DB SANITY CHECK");
+  res.status(200).send("JUSTCHECK BACKEND v1.2 — CHECKS ENDPOINT RESTORED");
 });
 
 /**
- * Database sanity endpoint (READ-ONLY)
+ * Core checks endpoint (READ-ONLY)
  */
-app.get("/db-check", async (req, res) => {
+app.get("/checks", async (req, res) => {
   try {
-    const result = await db.query(`
+    const { identifier, identifier_type } = req.query;
+
+    if (!identifier || !identifier_type) {
+      return res.status(400).json({
+        error: "Missing identifier or identifier_type",
+      });
+    }
+
+    const normalized = normalizeIdentifier(identifier, identifier_type);
+
+    const result = await db.query(
+      `
       SELECT
-        COUNT(*)::int AS total_checks,
-        MIN(created_at) AS first_seen,
-        MAX(created_at) AS last_seen
+        COUNT(*)::int AS count,
+        MIN(created_at) AS first_seen
       FROM checks
-    `);
+      WHERE identifier = $1
+        AND identifier_type = $2
+      `,
+      [normalized, identifier_type]
+    );
 
     res.json({
-      status: "ok",
-      total_checks: result.rows[0].total_checks,
+      identifier: normalized,
+      identifier_type,
+      count: result.rows[0].count,
       first_seen: result.rows[0].first_seen,
-      last_seen: result.rows[0].last_seen,
     });
   } catch (err) {
     res.status(500).json({
-      status: "error",
       error: err.message,
     });
   }
