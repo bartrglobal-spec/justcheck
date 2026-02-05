@@ -1,79 +1,55 @@
+require("dotenv").config();
+
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
+const path = require("path");
 
-const normalizeIdentifier = require("./utils");
-const db = require("./db");
-const deriveConfidence = require("./brain");
+const { runBrain } = require("./brain");
+const { guardInput } = require("./brain/guard");
 
 const app = express();
 
-/**
- * CORS — allow browser-based frontend
- */
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET"],
-  })
-);
-
 app.use(bodyParser.json());
 
-/**
- * Health check
- */
-app.get("/", (req, res) => {
-  res.status(200).send("OK");
-});
+// 🔒 STATIC FRONTEND
+app.use(express.static(
+  path.join(__dirname, "..", "frontend", "public")
+));
 
-/**
- * Core check endpoint
- */
-app.get("/checks", async (req, res) => {
+// 🔒 PORT
+const PORT = process.env.PORT || 10000;
+
+// 🔒 CHECK ENDPOINT
+app.get("/check", async (req, res) => {
   try {
-    const { identifier, identifier_type } = req.query;
-
-    if (!identifier || !identifier_type) {
-      return res.status(400).json({
-        error: "Missing identifier or identifier_type",
-      });
-    }
-
-    const normalized = normalizeIdentifier(identifier, identifier_type);
-
-    const result = await db.query(
-      `
-      SELECT
-        COUNT(*)::int AS total_checks,
-        MIN(created_at) AS first_seen
-      FROM checks
-      WHERE identifier = $1
-        AND identifier_type = $2
-      `,
-      [normalized, identifier_type]
-    );
-
-    const confidence = deriveConfidence({
-      count: result.rows[0].total_checks,
-      firstSeen: result.rows[0].first_seen,
+    const guarded = guardInput({
+      identifier: req.query.identifier,
+      identifier_type: req.query.identifier_type
     });
 
-    res.json({
-      identifier: normalized,
-      identifier_type,
-      total_checks: result.rows[0].total_checks,
-      first_seen: result.rows[0].first_seen,
-      confidence,
-    });
+    const result = await runBrain(guarded);
+    res.set("X-JustCheck-Contract", "report:v1.0.0");
+    res.json(result);
   } catch (err) {
-    res.status(500).json({
-      error: err.message,
+    res.status(400).json({
+      error: "Invalid request",
+      message: err.message
     });
   }
 });
 
-const PORT = process.env.PORT || 10000;
+// 🔒 CONTRACT ROUTES
+app.get("/contract/report", (req, res) => {
+  res.sendFile(path.join(__dirname, "contract", "reportContract.json"));
+});
+
+app.get("/contract/report/v1", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "contract", "versions", "reportContract.v1.json")
+  );
+});
+
+// 🔒 BOOT
 app.listen(PORT, () => {
   console.log(`[BOOT] Server listening on port ${PORT}`);
 });

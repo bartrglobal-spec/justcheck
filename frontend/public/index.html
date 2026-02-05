@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JustCheck</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+    .report {
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .Green { border-left: 6px solid #2ecc71; }
+    .Amber { border-left: 6px solid #f39c12; }
+    .Red { border-left: 6px solid #e74c3c; }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>JustCheck</h1>
+  <p>Check an identifier before you send money.</p>
+
+  <input id="identifier" placeholder="Enter identifier" />
+  <select id="identifier_type">
+    <option value="phone">Phone</option>
+  </select>
+  <button onclick="runCheck()">Check</button>
+
+  <div id="output"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

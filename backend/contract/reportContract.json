@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "identifier": "string",
+  "identifier_type": "string",
+  "confidence": "LOW | MEDIUM | HIGH",
+  "risk_color": "Green | Amber | Red",
+  "headline": "string (locked phrases only)",
+  "indicators": [
+    {
+      "code": "string",
+      "level": "green | amber | red",
+      "order": "number"
+    }
+  ],
+  "system_notes": [
+    "string (locked phrases only)"
+  ],
+  "meta": {
+    "total_checks": "number",
+    "first_seen": "string | null",
+    "generated_at": "ISO-8601 string"
+  }
+}
