@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>justcheckit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Run a quick risk check on a phone number, name, or payment reference before you send money. No sign-ups. No accounts.">
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #111111;
+  color: #ffffff;
+}
+
+.hidden { display: none; }
+
+.report-shell {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+/* BRAND */
+.brand-wrap { display: inline-block; }
+
+.brand {
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.3px;
+}
+
+.brand-underline {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.brand-underline span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.green { background: #2ecc71; }
+.amber { background: #f39c12; }
+.red   { background: #e74c3c; }
+
+/* HERO */
+.tagline {
+  margin-top: 26px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* INPUT */
+.input {
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+}
+
+.input::placeholder {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* BUTTONS */
+.primary, .cta, .secondary {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.primary { background: #ffffff; color: #000000; }
+.cta     { background: #f39c12; color: #1a1a1a; }
+.secondary { background: #222222; color: #ffffff; }
+
+/* TEXT */
+.trust, .cta-sub, .body {
+  margin-top: 14px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* BADGES */
+.badge {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.badge.amber { background: #f39c12; color: #1a1a1a; }
+
+/* TITLES */
+.title {
+  margin-top: 14px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* CARDS */
+.card {
+  background: #1c1c1c;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 14px;
+}
+
+/* SECTIONS */
+.summary, .share {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+  margin-top: 30px;
+  font-size: 11px;
+  opacity: 0.5;
+}
+</style>
+</head>
+
+<body>
+<div class="report-shell">
+
+<header>
+  <div class="brand-wrap">
+    <div class="brand">justcheckit</div>
+    <div class="brand-underline">
+      <span class="green"></span>
+      <span class="amber"></span>
+      <span class="red"></span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- SCREEN 1 -->
+<section id="s1">
+  <div class="tagline">Before you send money, just check.</div>
+
+  <input
+    id="userInput"
+    class="input"
+    placeholder="Phone number, name, reference, or link"
+  >
+
+  <button class="primary" onclick="runCheck()">Just check</button>
+
+  <div class="trust">No signup · No subscription · No Google login</div>
+</section>
+
+<!-- SCREEN 2 -->
+<section id="s2" class="hidden">
+  <div class="title">Checking…</div>
+  <div class="body">Scanning available indicators</div>
+</section>
+
+<!-- SCREEN 3 -->
+<section id="s3" class="hidden">
+  <div class="badge amber">Amber indicators detected</div>
+
+  <div class="title">Some risk indicators were identified</div>
+
+  <div class="body">
+    This free check confirms that multiple risk indicators are present for this identifier.
+  </div>
+
+  <button class="cta">
+    Unlock full report for $1.25 (or your local currency equivalent)
+  </button>
+
+  <div class="cta-sub">
+    One-time check · No account · Charged in your local currency
+  </div>
+</section>
+
+<!-- SCREEN 5 -->
+<section id="s5" class="hidden">
+  <div class="badge amber">Amber indicator profile</div>
+
+  <div class="title">Full report findings</div>
+
+  <div class="body">
+    Based on all available indicators at the time of this check
+  </div>
+
+  <div class="card">
+    <strong>Transaction behaviour indicators</strong><br>
+    <span style="opacity:0.6;font-size:12px;">
+      Medium confidence · Observed across similar reports
+    </span>
+  </div>
+
+  <div class="summary">
+    <strong>What users often consider at this stage</strong><br><br>
+    Users in similar situations commonly take additional time to verify details,
+    seek clarification, or choose payment methods that offer protection.
+  </div>
+
+  <div class="share">
+    <strong>Help someone else check before paying</strong><br><br>
+    <button class="secondary">Share justcheckit</button>
+  </div>
+</section>
+
+</main>
+
+<div class="disclaimer">
+  justcheckit provides risk indicators only and does not guarantee outcomes.
+  Always verify independently before sending money.
+</div>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll("section").forEach(s =>
+    s.classList.add("hidden")
+  );
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function runCheck() {
+  show("s2");
+  setTimeout(() => show("s3"), 1200);
+}
+</script>
+
+</body>
+</html>
