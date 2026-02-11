@@ -1,38 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>JustCheck</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-    }
-    .report {
-      border: 1px solid #ccc;
-      padding: 16px;
-      margin-top: 20px;
-    }
-    .Green { border-left: 6px solid #2ecc71; }
-    .Amber { border-left: 6px solid #f39c12; }
-    .Red { border-left: 6px solid #e74c3c; }
-    ul { padding-left: 20px; }
-  </style>
+<meta charset="UTF-8">
+<title>justcheckit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --green:#4caf50;
+  --amber:#f5a623;
+  --red:#e74c3c;
+  --bg:#0f1115;
+  --text:#eaeaea;
+  --muted:#a0a0a0;
+  --cta:#f5c400;
+}
+
+* {
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.container {
+  width:100%;
+  max-width:420px;
+  padding:32px 20px;
+  text-align:center;
+}
+
+/* ===== LOGO (LOCKED) ===== */
+.logo {
+  display:inline-block;
+}
+
+.logo-text {
+  font-size:34px;
+  font-weight:700;
+}
+
+.logo-line {
+  margin-top:6px;
+  height:4px;
+  width:100%;
+  background:linear-gradient(to right,var(--green),var(--amber),var(--red));
+  border-radius:2px;
+  overflow:hidden;
+}
+
+/* ===== SCANNING (SCREEN 2 ONLY) ===== */
+.scanning .logo-line::before {
+  content:"";
+  display:block;
+  height:100%;
+  width:35%;
+  background:inherit;
+  animation:scan 2.6s linear infinite;
+}
+
+@keyframes scan {
+  from { transform:translateX(-120%); }
+  to   { transform:translateX(260%); }
+}
+
+/* ===== STATUS ===== */
+.status {
+  margin-top:16px;
+}
+
+.indicator {
+  display:inline-block;
+  padding:8px 18px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:0.4px;
+  background:rgba(245,166,35,0.28);
+  color:#ffbf4a;
+  box-shadow:0 0 0 1px rgba(245,166,35,0.45),
+             0 0 18px rgba(245,166,35,0.25);
+}
+
+/* ===== TEXT ===== */
+.headline {
+  margin-top:22px;
+  font-size:18px;
+  line-height:1.4;
+}
+
+.subtext {
+  margin-top:12px;
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* ===== INPUT ===== */
+input {
+  margin-top:22px;
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  border-radius:6px;
+  border:none;
+}
+
+button {
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  font-weight:600;
+  background:var(--cta);
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.price {
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.disclaimer {
+  margin-top:18px;
+  font-size:12px;
+  color:#7d7d7d;
+  line-height:1.4;
+}
+</style>
 </head>
+
 <body>
 
-  <h1>JustCheck</h1>
-  <p>Check an identifier before you send money.</p>
+<div class="container" id="app"></div>
 
-  <input id="identifier" placeholder="Enter identifier" />
-  <select id="identifier_type">
-    <option value="phone">Phone</option>
-  </select>
-  <button onclick="runCheck()">Check</button>
+<script>
+let step = 1;
+const app = document.getElementById("app");
 
-  <div id="output"></div>
+const scanMessages = [
+  "Scanning for risk indicators across platforms",
+  "Reviewing reported patterns and context",
+  "Checking available network and reference data"
+];
 
-  <script src="app.js"></script>
+function render() {
+  app.className = "container";
+
+  if (step === 1) {
+    app.innerHTML = `
+      <div class="logo">
+        <div class="logo-text">justcheckit</div>
+        <div class="logo-line"></div>
+      </div>
+
+      <div class="headline">
+        A quick check for risk indicators before you send money.
+      </div>
+
+      <div class="subtext">
+        JustCheck helps you spot potential warning signs using available reports
+        and contextual indicators — before a payment is made.
+      </div>
+
+      <input placeholder="Phone number, business name, reference or link" />
+      <button onclick="goToScan()">Just check</button>
+
+      <div class="disclaimer">
+        No signup · No subscription · No tracking<br>
+        JustCheck provides pre-payment risk indicators, not guarantees.
+      </div>
+    `;
+  }
+
+  if (step === 2) {
+    app.classList.add("scanning");
+    let i = 0;
+
+    app.innerHTML = `
+      <div class="logo">
+        <div class="logo-text">justcheckit</div>
+        <div class="logo-line"></div>
+      </div>
+
+      <div class="headline" id="scanText">
+        ${scanMessages[0]}
+      </div>
+    `;
+
+    const interval = setInterval(() => {
+      i = (i + 1) % scanMessages.length;
+      document.getElementById("scanText").innerText = scanMessages[i];
+    }, 1800);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      step = 3;
+      render();
+    }, 5600);
+  }
+
+  if (step === 3) {
+    app.innerHTML = `
+      <div class="logo">
+        <div class="logo-text">justcheckit</div>
+        <div class="logo-line"></div>
+      </div>
+
+      <div class="status">
+        <div class="indicator">AMBER INDICATORS</div>
+      </div>
+
+      <div class="headline">
+        Some risk indicators were present at the time of this check.
+      </div>
+
+      <div class="subtext">
+        These indicators provide context to help you decide before sending money.
+        The full report explains what was observed and how to interpret it.
+      </div>
+
+      <button onclick="goToPay()">Unlock full report</button>
+
+      <div class="price">$1.25 · charged in your local currency</div>
+
+      <div class="disclaimer">
+        This report provides pre-payment risk indicators only.<br>
+        It does not determine intent, guilt, or outcome.
+      </div>
+    `;
+  }
+
+  /* ===== SCREEN 4: PAY (NEW, LOGIC ONLY) ===== */
+  if (step === 4) {
+    app.innerHTML = `
+      <div class="logo">
+        <div class="logo-text">justcheckit</div>
+        <div class="logo-line"></div>
+      </div>
+
+      <div class="headline">
+        Unlock full report
+      </div>
+
+      <div class="subtext">
+        Complete payment to view the full indicator breakdown
+        and contextual explanation.
+      </div>
+
+      <button disabled>
+        Payment gateway coming next
+      </button>
+
+      <div class="price">$1.25 · one-time</div>
+
+      <div class="disclaimer">
+        Secure payment · No account required
+      </div>
+    `;
+  }
+}
+
+function goToScan() {
+  step = 2;
+  render();
+}
+
+function goToPay() {
+  step = 4;
+  render();
+}
+
+render();
+</script>
+
 </body>
 </html>
