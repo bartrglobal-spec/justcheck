@@ -1,9 +1,16 @@
-// brain/indicators/index.js
+/**
+ * Central Indicator Entry Point
+ *
+ * RULES:
+ * - Must export a flat array
+ * - Must not execute indicator logic
+ * - Must not infer identifier types
+ * - Versioned indicators are authoritative
+ */
 
-const phoneSanity = require("./v1/phoneSanity");
-const firstSeen = require("./v1/firstSeen");
+const { loadIndicators } = require("./loader");
 
-module.exports = [
-  phoneSanity,
-  firstSeen
-];
+// Default to v1 indicator set
+const indicators = loadIndicators({ includePremium: true });
+
+module.exports = indicators;

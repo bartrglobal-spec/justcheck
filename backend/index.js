@@ -4,12 +4,13 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
 
-const { runBrain } = require("./brain");
-const { guardInput } = require("./brain/guard");
+const { guardRun } = require("./brain/guard");
+const { formatPaidReport } = require("./brain/formatPaidReport"); // ✅ ADD
+const { initPayment, confirmPayment } = require("./payments/mock");
 
 const app = express();
 
-/* 🔥 STEP 20.2 — GLOBAL ERROR HARDENING */
+/* 🔥 GLOBAL ERROR HARDENING */
 process.on("uncaughtException", (err) => {
   console.error("🔥 Uncaught Exception:", err.message);
 });
@@ -20,20 +21,20 @@ process.on("unhandledRejection", (reason) => {
 
 app.use(bodyParser.json());
 
-// 🔒 STATIC FRONTEND
+/* 🔒 STATIC FRONTEND */
 app.use(
   express.static(
     path.join(__dirname, "..", "frontend", "public")
   )
 );
 
-// 🔒 PORT
+/* 🔒 PORT */
 const PORT = process.env.PORT || 10000;
 
-/* 🔒 STEP 20.5 — BASIC RATE LIMITING (IN-MEMORY) */
+/* 🔒 BASIC RATE LIMITING (IN-MEMORY) */
 const rateMap = new Map();
-const RATE_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT = 60;           // 60 checks per IP per minute
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT = 60;
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -52,68 +53,87 @@ function isRateLimited(ip) {
   return timestamps.length > RATE_LIMIT;
 }
 
-// 🔒 CHECK ENDPOINT (SAFE FALLBACK + RATE LIMIT)
-app.get("/check", async (req, res) => {
-  const identifier = req.query.identifier || null;
-  const identifier_type = req.query.identifier_type || null;
+/* ✅ FREE CHECK */
+app.post("/check", async (req, res) => {
+  const { identifier, identifier_type } = req.body || {};
   const ip = req.ip || "unknown";
 
-  // 🔒 RATE LIMIT DEGRADATION
+  const safeFallbackReport = {
+    confidence: "MEDIUM",
+    risk_color: "Amber",
+    headline: "Some risk indicators were detected at the time of this check.",
+    indicators: []
+  };
+
   if (isRateLimited(ip)) {
-    return res.json({
-      identifier,
-      identifier_type,
-      confidence: "MEDIUM",
-      risk_color: "Amber",
-      headline: "Some risk indicators were detected at the time of this check.",
-      indicators: [],
-      system_notes: [
-        "This check was rate-limited due to high request volume.",
-        "Results were generated using conservative system safeguards."
-      ],
-      meta: {
-        total_checks: 0,
-        first_seen: null,
-        generated_at: new Date().toISOString()
-      }
-    });
+    return res.json({ report: safeFallbackReport });
   }
 
   try {
-    const guarded = guardInput({
+    const result = await guardRun(
+      { identifier, identifier_type },
+      { paid: false }
+    );
+
+    res.set("X-JustCheck-Contract", "report:v1.0.0");
+
+    return res.json({ report: result });
+
+  } catch (err) {
+    console.error("⚠️ SAFE FALLBACK:", err.message);
+    return res.json({ report: safeFallbackReport });
+  }
+});
+
+/* 💳 PAYMENT INIT (MOCK) */
+app.post("/pay/init", (req, res) => {
+  try {
+    const { identifier, identifier_type } = req.body || {};
+
+    const payment = initPayment({
       identifier,
       identifier_type
     });
 
-    const result = await runBrain(guarded);
-
-    res.set("X-JustCheck-Contract", "report:v1.0.0");
-    return res.json(result);
+    return res.json(payment);
 
   } catch (err) {
-    console.error("⚠️ SAFE FALLBACK TRIGGERED:", err.message);
-
-    return res.json({
-      identifier,
-      identifier_type,
-      confidence: "MEDIUM",
-      risk_color: "Amber",
-      headline: "Some risk indicators were detected at the time of this check.",
-      indicators: [],
-      system_notes: [
-        "Some data sources were temporarily unavailable at the time of this check.",
-        "This check was completed using conservative system safeguards."
-      ],
-      meta: {
-        total_checks: 0,
-        first_seen: null,
-        generated_at: new Date().toISOString()
-      }
+    console.error("💥 PAYMENT INIT ERROR:", err.message);
+    return res.status(400).json({
+      error: "Unable to initiate payment"
     });
   }
 });
 
-// 🔒 CONTRACT ROUTES
+/* 💳 PAYMENT CONFIRM — PAID REPORT */
+app.get("/pay/confirm", async (req, res) => {
+  try {
+    const { ref, identifier, identifier_type } = req.query;
+
+    const confirmation = confirmPayment(ref);
+
+    const freeStyleReport = await guardRun(
+      { identifier, identifier_type },
+      { paid: true }
+    );
+
+    // ✅ PAID EXPANSION HAPPENS HERE
+    const paidReport = formatPaidReport(freeStyleReport);
+
+    return res.json({
+      payment: confirmation,
+      report: paidReport
+    });
+
+  } catch (err) {
+    console.error("💥 PAYMENT CONFIRM ERROR:", err.message);
+    return res.status(400).json({
+      error: "Payment confirmation failed"
+    });
+  }
+});
+
+/* 🔒 CONTRACT ROUTES */
 app.get("/contract/report", (req, res) => {
   res.sendFile(path.join(__dirname, "contract", "reportContract.json"));
 });
@@ -124,7 +144,7 @@ app.get("/contract/report/v1", (req, res) => {
   );
 });
 
-// 🔒 BOOT
+/* 🔒 BOOT */
 app.listen(PORT, () => {
   console.log(`[BOOT] Server listening on port ${PORT}`);
 });
