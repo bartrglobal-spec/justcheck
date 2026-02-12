@@ -38,7 +38,7 @@ body {
   text-align:center;
 }
 
-/* ===== LOGO (LOCKED) ===== */
+/* ===== LOGO ===== */
 .logo {
   display:inline-block;
 }
@@ -54,10 +54,9 @@ body {
   width:100%;
   background:linear-gradient(to right,var(--green),var(--amber),var(--red));
   border-radius:2px;
-  overflow:hidden;
 }
 
-/* ===== SCANNING (SCREEN 2 ONLY) ===== */
+/* ===== SCANNING ===== */
 .scanning .logo-line::before {
   content:"";
   display:block;
@@ -83,11 +82,8 @@ body {
   border-radius:999px;
   font-size:14px;
   font-weight:700;
-  letter-spacing:0.4px;
   background:rgba(245,166,35,0.28);
   color:#ffbf4a;
-  box-shadow:0 0 0 1px rgba(245,166,35,0.45),
-             0 0 18px rgba(245,166,35,0.25);
 }
 
 /* ===== TEXT ===== */
@@ -104,7 +100,7 @@ body {
   line-height:1.5;
 }
 
-/* ===== INPUT ===== */
+/* ===== INPUT & BUTTONS ===== */
 input {
   margin-top:22px;
   width:100%;
@@ -120,10 +116,57 @@ button {
   padding:14px;
   font-size:16px;
   font-weight:600;
-  background:var(--cta);
   border:none;
   border-radius:6px;
   cursor:pointer;
+}
+
+button.primary {
+  background:var(--cta);
+}
+
+button.secondary {
+  background:transparent;
+  color:var(--text);
+  border:1px solid rgba(255,255,255,0.25);
+  margin-top:12px;
+}
+
+/* ===== CARDS ===== */
+.card {
+  margin-top:22px;
+  padding:16px;
+  background:#161922;
+  border-radius:10px;
+  text-align:left;
+}
+
+.card-title {
+  font-size:15px;
+  font-weight:600;
+  margin-bottom:10px;
+}
+
+.card-text {
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.list {
+  padding-left:18px;
+  margin:0;
+}
+
+.list li {
+  margin-bottom:8px;
+  font-size:14px;
+}
+
+.divider {
+  height:1px;
+  background:rgba(255,255,255,0.08);
+  margin:24px 0;
 }
 
 .price {
@@ -150,9 +193,9 @@ let step = 1;
 const app = document.getElementById("app");
 
 const scanMessages = [
-  "Scanning for risk indicators across platforms",
-  "Reviewing reported patterns and context",
-  "Checking available network and reference data"
+  "Scanning available information",
+  "Reviewing reported patterns",
+  "Checking reference history"
 ];
 
 function render() {
@@ -166,21 +209,17 @@ function render() {
         <div class="logo-line"></div>
       </div>
 
-      <div class="headline">
-        A quick check for contextual risk indicators before you send money.
-      </div>
-
+      <div class="headline">Before you pay — check first</div>
       <div class="subtext">
-        JustCheck surfaces available indicators and patterns to help inform
-        payment decisions — before money is sent.
+        A fast, private check for early warning signs people often miss.
       </div>
 
-      <input placeholder="Phone number, business name, reference or link" />
-      <button onclick="goToScan()">Just check</button>
+      <input placeholder="Phone number, business name, or payment-related detail" />
+      <button class="primary" onclick="goToScan()">Check now</button>
 
       <div class="disclaimer">
-        No signup · No subscription · No tracking<br>
-        Informational indicators only. Always verify independently.
+        No signup · No registration · No accounts<br>
+        JustCheckIt provides information, not advice or judgments.
       </div>
     `;
   }
@@ -195,10 +234,7 @@ function render() {
         <div class="logo-text">justcheckit</div>
         <div class="logo-line"></div>
       </div>
-
-      <div class="headline" id="scanText">
-        ${scanMessages[0]}
-      </div>
+      <div class="headline" id="scanText">${scanMessages[0]}</div>
     `;
 
     const interval = setInterval(() => {
@@ -222,29 +258,25 @@ function render() {
       </div>
 
       <div class="status">
-        <div class="indicator">AMBER INDICATORS</div>
+        <div class="indicator">RESULT: AMBER</div>
       </div>
 
-      <div class="headline">
-        Some contextual indicators were present at the time of this check.
-      </div>
-
+      <div class="headline">This check falls into the AMBER range</div>
       <div class="subtext">
-        Indicators provide non-judgmental context to support informed decisions.
-        A detailed breakdown is available.
+        We found information that may require closer attention.
+        Unlock the full explanation to understand what was observed.
       </div>
 
-      <button onclick="goToPay()">View detailed indicator report</button>
-
-      <div class="price">$1.25 · charged in your local currency</div>
+      <button class="primary" onclick="goToPay()">Unlock full check</button>
+      <div class="price">$1.49 · charged in your local currency</div>
 
       <div class="disclaimer">
-        Indicators are informational only and may change over time.
+        This result highlights patterns only and does not make claims or accusations.
       </div>
     `;
   }
 
-  /* SCREEN 4 — PAY (LEGALLY SAFE) */
+  /* SCREEN 4 */
   if (step === 4) {
     app.innerHTML = `
       <div class="logo">
@@ -252,25 +284,20 @@ function render() {
         <div class="logo-line"></div>
       </div>
 
-      <div class="headline">
-        View detailed indicator report
-      </div>
-
+      <div class="headline">Secure payment</div>
       <div class="subtext">
-        This one-time payment provides access to a detailed view of observed
-        indicators, their category, and relative recency.
+        You’ll be redirected to PayPal to complete payment securely.
       </div>
 
-      <button onclick="goToReport()">Pay $1.25 and continue</button>
+      <button class="primary" onclick="redirectToPayPal()">Pay $1.49 and continue</button>
 
       <div class="disclaimer">
-        One-time informational access · No ongoing charges<br>
-        JustCheck does not provide judgments, guarantees, or outcomes.
+        One-time payment · No subscriptions
       </div>
     `;
   }
 
-  /* SCREEN 5 — PAID REPORT */
+  /* SCREEN 5 */
   if (step === 5) {
     app.innerHTML = `
       <div class="logo">
@@ -279,40 +306,63 @@ function render() {
       </div>
 
       <div class="status">
-        <div class="indicator">AMBER INDICATOR PROFILE</div>
+        <div class="indicator">AMBER RESULT</div>
       </div>
 
-      <div class="headline">
-        Detailed indicator overview
+      <div class="headline">Additional information is limited or unclear</div>
+
+      <div class="card">
+        <div class="card-title">What we observed</div>
+        <ul class="list">
+          <li>Some details didn’t line up clearly across the available information</li>
+          <li>There was very little independent information available at the time of the check</li>
+          <li>Key details could not be confirmed elsewhere</li>
+          <li>The overall picture was incomplete</li>
+        </ul>
       </div>
 
-      <div class="subtext">
-        This report summarises observed indicators, their general category,
-        and timing context. No single indicator is determinative.
+      <div class="divider"></div>
+
+      <div class="card">
+        <div class="card-title">What this means</div>
+        <p class="card-text">
+          There isn’t enough clear information to confidently confirm or rule anything out.
+          This result reflects uncertainty, not risk or wrongdoing.
+        </p>
       </div>
+
+      <div class="divider"></div>
+
+      <div class="card">
+        <div class="card-title">How people typically use this result</div>
+        <ul class="list">
+          <li>Ask for additional confirmation or documentation</li>
+          <li>Confirm details directly with the other party</li>
+          <li>Wait before sending money until things are clearer</li>
+        </ul>
+      </div>
+
+      <button class="primary">Share this check</button>
+      <button class="secondary" onclick="restart()">Run another check</button>
 
       <div class="disclaimer">
-        Provided for informational purposes only.<br>
-        Always use independent judgment before making payments.
+        This result does not indicate wrongdoing and should not be interpreted as a conclusion.
+        <br><br>
+        This report summarises contextual information only and does not make judgments,
+        predictions, or accusations.
       </div>
     `;
   }
 }
 
-function goToScan() {
-  step = 2;
-  render();
+function goToScan() { step = 2; render(); }
+function goToPay() { step = 4; render(); }
+
+function redirectToPayPal() {
+  window.location.href = "https://www.paypal.com/ncp/payment/PK9WZD2JVA4YG";
 }
 
-function goToPay() {
-  step = 4;
-  render();
-}
-
-function goToReport() {
-  step = 5;
-  render();
-}
+function restart() { step = 1; render(); }
 
 render();
 </script>
