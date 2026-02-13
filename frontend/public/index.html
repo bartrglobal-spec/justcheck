@@ -38,11 +38,6 @@ body {
   text-align:center;
 }
 
-/* ===== LOGO ===== */
-.logo {
-  display:inline-block;
-}
-
 .logo-text {
   font-size:34px;
   font-weight:700;
@@ -56,7 +51,6 @@ body {
   border-radius:2px;
 }
 
-/* ===== SCANNING ===== */
 .scanning .logo-line::before {
   content:"";
   display:block;
@@ -71,36 +65,17 @@ body {
   to   { transform:translateX(260%); }
 }
 
-/* ===== STATUS ===== */
-.status {
-  margin-top:16px;
-}
-
-.indicator {
-  display:inline-block;
-  padding:8px 18px;
-  border-radius:999px;
-  font-size:14px;
-  font-weight:700;
-  background:rgba(245,166,35,0.28);
-  color:#ffbf4a;
-}
-
-/* ===== TEXT ===== */
 .headline {
   margin-top:22px;
   font-size:18px;
-  line-height:1.4;
 }
 
 .subtext {
   margin-top:12px;
   font-size:14px;
   color:var(--muted);
-  line-height:1.5;
 }
 
-/* ===== INPUT & BUTTONS ===== */
 input {
   margin-top:22px;
   width:100%;
@@ -125,14 +100,6 @@ button.primary {
   background:var(--cta);
 }
 
-button.secondary {
-  background:transparent;
-  color:var(--text);
-  border:1px solid rgba(255,255,255,0.25);
-  margin-top:12px;
-}
-
-/* ===== CARDS ===== */
 .card {
   margin-top:22px;
   padding:16px;
@@ -141,55 +108,24 @@ button.secondary {
   text-align:left;
 }
 
-.card-title {
-  font-size:15px;
-  font-weight:600;
-  margin-bottom:10px;
-}
-
-.card-text {
-  font-size:14px;
-  color:var(--muted);
-  line-height:1.5;
-}
-
-.list {
-  padding-left:18px;
-  margin:0;
-}
-
-.list li {
-  margin-bottom:8px;
-  font-size:14px;
-}
-
-.divider {
-  height:1px;
-  background:rgba(255,255,255,0.08);
-  margin:24px 0;
-}
-
-.price {
-  margin-top:10px;
-  font-size:13px;
-  color:var(--muted);
-}
-
 .disclaimer {
   margin-top:18px;
   font-size:12px;
   color:#7d7d7d;
-  line-height:1.4;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container" id="app"></div>
 
 <script>
 let step = 1;
+let identifier = "";
+let identifier_type = "email";
+let checkReport = null;
+let paymentRef = null;
+
 const app = document.getElementById("app");
 
 const scanMessages = [
@@ -201,39 +137,28 @@ const scanMessages = [
 function render() {
   app.className = "container";
 
-  /* SCREEN 1 */
   if (step === 1) {
     app.innerHTML = `
-      <div class="logo">
-        <div class="logo-text">justcheckit</div>
-        <div class="logo-line"></div>
-      </div>
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
       <div class="headline">Before you pay — check first</div>
-      <div class="subtext">
-        A fast, private check for early warning signs people often miss.
-      </div>
+      <div class="subtext">A fast, private check for early warning signs.</div>
 
-      <input placeholder="Phone number, business name, or payment-related detail" />
-      <button class="primary" onclick="goToScan()">Check now</button>
+      <input id="input" placeholder="Email, phone, or reference" />
+      <button class="primary" onclick="runCheck()">Check now</button>
 
-      <div class="disclaimer">
-        No signup · No registration · No accounts<br>
-        JustCheckIt provides information, not advice or judgments.
-      </div>
+      <div class="disclaimer">Information only · No judgments</div>
     `;
   }
 
-  /* SCREEN 2 */
   if (step === 2) {
     app.classList.add("scanning");
     let i = 0;
 
     app.innerHTML = `
-      <div class="logo">
-        <div class="logo-text">justcheckit</div>
-        <div class="logo-line"></div>
-      </div>
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
       <div class="headline" id="scanText">${scanMessages[0]}</div>
     `;
 
@@ -246,126 +171,128 @@ function render() {
       clearInterval(interval);
       step = 3;
       render();
-    }, 5600);
+    }, 5200);
   }
 
-  /* SCREEN 3 */
-  if (step === 3) {
+  if (step === 3 && checkReport) {
     app.innerHTML = `
-      <div class="logo">
-        <div class="logo-text">justcheckit</div>
-        <div class="logo-line"></div>
-      </div>
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-      <div class="status">
-        <div class="indicator">RESULT: AMBER</div>
-      </div>
+      <div class="headline">${checkReport.headline}</div>
+      <div class="subtext">Unlock the full explanation.</div>
 
-      <div class="headline">This check falls into the AMBER range</div>
-      <div class="subtext">
-        We found information that may require closer attention.
-        Unlock the full explanation to understand what was observed.
-      </div>
-
-      <button class="primary" onclick="goToPay()">Unlock full check</button>
-      <div class="price">$1.49 · charged in your local currency</div>
-
-      <div class="disclaimer">
-        This result highlights patterns only and does not make claims or accusations.
-      </div>
+      <button class="primary" onclick="startPayment()">Unlock full check</button>
+      <div class="disclaimer">$1.49 · one-time</div>
     `;
   }
 
-  /* SCREEN 4 */
   if (step === 4) {
     app.innerHTML = `
-      <div class="logo">
-        <div class="logo-text">justcheckit</div>
-        <div class="logo-line"></div>
-      </div>
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-      <div class="headline">Secure payment</div>
-      <div class="subtext">
-        You’ll be redirected to PayPal to complete payment securely.
-      </div>
-
-      <button class="primary" onclick="redirectToPayPal()">Pay $1.49 and continue</button>
-
-      <div class="disclaimer">
-        One-time payment · No subscriptions
-      </div>
+      <div class="headline">Processing payment…</div>
+      <div class="subtext">Finalising your report</div>
     `;
   }
 
-  /* SCREEN 5 */
-  if (step === 5) {
+  if (step === 5 && checkReport) {
     app.innerHTML = `
-      <div class="logo">
-        <div class="logo-text">justcheckit</div>
-        <div class="logo-line"></div>
-      </div>
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-      <div class="status">
-        <div class="indicator">AMBER RESULT</div>
-      </div>
-
-      <div class="headline">Additional information is limited or unclear</div>
+      <div class="headline">${checkReport.headline}</div>
 
       <div class="card">
-        <div class="card-title">What we observed</div>
-        <ul class="list">
-          <li>Some details didn’t line up clearly across the available information</li>
-          <li>There was very little independent information available at the time of the check</li>
-          <li>Key details could not be confirmed elsewhere</li>
-          <li>The overall picture was incomplete</li>
+        <strong>Confidence:</strong> ${checkReport.confidence}<br><br>
+        <strong>Indicators:</strong>
+        <ul>
+          ${(checkReport.indicators || []).map(i => `<li>${i}</li>`).join("") || "<li>No indicators</li>"}
         </ul>
       </div>
 
-      <div class="divider"></div>
-
-      <div class="card">
-        <div class="card-title">What this means</div>
-        <p class="card-text">
-          There isn’t enough clear information to confidently confirm or rule anything out.
-          This result reflects uncertainty, not risk or wrongdoing.
-        </p>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="card">
-        <div class="card-title">How people typically use this result</div>
-        <ul class="list">
-          <li>Ask for additional confirmation or documentation</li>
-          <li>Confirm details directly with the other party</li>
-          <li>Wait before sending money until things are clearer</li>
-        </ul>
-      </div>
-
-      <button class="primary">Share this check</button>
-      <button class="secondary" onclick="restart()">Run another check</button>
+      <button class="primary" onclick="restart()">Run another check</button>
 
       <div class="disclaimer">
-        This result does not indicate wrongdoing and should not be interpreted as a conclusion.
-        <br><br>
-        This report summarises contextual information only and does not make judgments,
-        predictions, or accusations.
+        Informational only · Not advice or conclusions
       </div>
     `;
   }
 }
 
-function goToScan() { step = 2; render(); }
-function goToPay() { step = 4; render(); }
+async function runCheck() {
+  const value = document.getElementById("input").value.trim();
+  if (!value) return alert("Enter a value");
 
-function redirectToPayPal() {
-  window.location.href = "https://www.paypal.com/ncp/payment/PK9WZD2JVA4YG";
+  identifier = value;
+  step = 2;
+  render();
+
+  try {
+    const res = await fetch("/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, identifier_type })
+    });
+
+    const data = await res.json();
+    checkReport = data.report;
+
+  } catch {
+    alert("Check failed");
+    step = 1;
+    render();
+  }
 }
 
-function restart() { step = 1; render(); }
+async function startPayment() {
+  step = 4;
+  render();
+
+  try {
+    const res = await fetch("/pay/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, identifier_type })
+    });
+
+    const data = await res.json();
+
+    if (!data || !data.payment || !data.payment.ref) {
+      throw new Error("Missing payment ref");
+    }
+
+    paymentRef = data.payment.ref;
+    await confirmPayment();
+
+  } catch {
+    alert("Payment failed");
+    step = 3;
+    render();
+  }
+}
+
+async function confirmPayment() {
+  const res = await fetch(
+    `/pay/confirm?ref=${paymentRef}&identifier=${identifier}&identifier_type=${identifier_type}`
+  );
+
+  const data = await res.json();
+  checkReport = data.report;
+  step = 5;
+  render();
+}
+
+function restart() {
+  step = 1;
+  identifier = "";
+  checkReport = null;
+  paymentRef = null;
+  render();
+}
 
 render();
 </script>
-
 </body>
 </html>
