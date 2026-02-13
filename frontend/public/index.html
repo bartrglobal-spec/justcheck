@@ -1,157 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>JustCheckIt</title>
+<meta charset="UTF-8">
+<title>justcheckit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b0b0b;
-      color: #fff;
-      padding: 40px;
-    }
+<style>
+:root {
+  --green:#4caf50;
+  --amber:#f5a623;
+  --red:#e74c3c;
+  --bg:#0f1115;
+  --text:#eaeaea;
+  --muted:#a0a0a0;
+  --cta:#f5c400;
+}
 
-    input, select, button {
-      padding: 10px;
-      margin: 8px 0;
-      width: 100%;
-      max-width: 400px;
-    }
+* {
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
 
-    button {
-      cursor: pointer;
-      font-weight: bold;
-    }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
 
-    .report {
-      margin-top: 30px;
-      padding: 20px;
-      border-radius: 8px;
-    }
+.container {
+  width:100%;
+  max-width:420px;
+  padding:32px 20px;
+  text-align:center;
+}
 
-    .green { background: #0f3; color: #000; }
-    .amber { background: #ffb000; color: #000; }
-    .red { background: #ff3b3b; color: #000; }
-  </style>
+.logo-text {
+  font-size:34px;
+  font-weight:700;
+}
+
+.logo-line {
+  margin-top:6px;
+  height:4px;
+  width:100%;
+  background:linear-gradient(to right,var(--green),var(--amber),var(--red));
+  border-radius:2px;
+}
+
+.scanning .logo-line::before {
+  content:"";
+  display:block;
+  height:100%;
+  width:35%;
+  background:inherit;
+  animation:scan 2.6s linear infinite;
+}
+
+@keyframes scan {
+  from { transform:translateX(-120%); }
+  to   { transform:translateX(260%); }
+}
+
+.headline {
+  margin-top:22px;
+  font-size:18px;
+}
+
+.subtext {
+  margin-top:12px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+input {
+  margin-top:22px;
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  border-radius:6px;
+  border:none;
+}
+
+button {
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  font-weight:600;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button.primary {
+  background:var(--cta);
+}
+
+.card {
+  margin-top:22px;
+  padding:16px;
+  background:#161922;
+  border-radius:10px;
+  text-align:left;
+}
+
+.disclaimer {
+  margin-top:18px;
+  font-size:12px;
+  color:#7d7d7d;
+}
+</style>
 </head>
 
 <body>
+<div class="container" id="app"></div>
 
-  <h1>JustCheckIt</h1>
+<script>
+let step = 1;
+let identifier = "";
+let identifier_type = "email";
+let checkReport = null;
+let paymentRef = null;
 
-  <select id="identifier_type">
-    <option value="phone">Phone Number</option>
-    <option value="business">Business Name</option>
-  </select>
+const app = document.getElementById("app");
 
-  <input
-    id="identifier"
-    placeholder="Enter identifier"
-  />
+const scanMessages = [
+  "Scanning available information",
+  "Reviewing reported patterns",
+  "Checking reference history"
+];
 
-  <button onclick="runCheck()">Run check</button>
+function render() {
+  app.className = "container";
 
-  <div id="output"></div>
+  if (step === 1) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-  <script>
-    async function runCheck() {
-      const identifier = document.getElementById("identifier").value;
-      const identifier_type = document.getElementById("identifier_type").value;
-      const output = document.getElementById("output");
+      <div class="headline">Before you pay — check first</div>
+      <div class="subtext">A fast, private check for early warning signs.</div>
 
-      output.innerHTML = "Checking...";
+      <input id="input" placeholder="Email, phone, or reference" />
+      <button class="primary" onclick="runCheck()">Check now</button>
 
-      try {
-        const res = await fetch("/check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier, identifier_type })
-        });
+      <div class="disclaimer">Information only · No judgments</div>
+    `;
+  }
 
-        const data = await res.json();
-        renderReport(data.report, false);
+  if (step === 2) {
+    app.classList.add("scanning");
+    let i = 0;
 
-      } catch (err) {
-        output.innerHTML = "Check failed.";
-      }
-    }
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+      <div class="headline" id="scanText">${scanMessages[0]}</div>
+    `;
 
-    async function startPayment() {
-      const identifier = document.getElementById("identifier").value;
-      const identifier_type = document.getElementById("identifier_type").value;
-      const output = document.getElementById("output");
+    const interval = setInterval(() => {
+      i = (i + 1) % scanMessages.length;
+      document.getElementById("scanText").innerText = scanMessages[i];
+    }, 1800);
 
-      output.innerHTML = "Starting payment...";
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 5200);
+  }
 
-      try {
-        const res = await fetch("/pay/init", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier, identifier_type })
-        });
+  if (step === 3 && checkReport) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-        const data = await res.json();
+      <div class="headline">${checkReport.headline}</div>
+      <div class="subtext">Unlock the full explanation.</div>
 
-        // MOCK CONFIRM — NO PAYPAL
-        confirmPayment(
-          data.payment.ref,
-          identifier,
-          identifier_type
-        );
+      <button class="primary" onclick="startPayment()">Unlock full check</button>
+      <div class="disclaimer">$1.49 · one-time</div>
+    `;
+  }
 
-      } catch (err) {
-        output.innerHTML = "Payment init failed.";
-      }
-    }
+  if (step === 4) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-    async function confirmPayment(ref, identifier, identifier_type) {
-      const output = document.getElementById("output");
-      output.innerHTML = "Generating full report...";
+      <div class="headline">Processing payment…</div>
+      <div class="subtext">Finalising your report</div>
+    `;
+  }
 
-      try {
-        const res = await fetch(
-          `/pay/confirm?ref=${encodeURIComponent(ref)}&identifier=${encodeURIComponent(identifier)}&identifier_type=${identifier_type}`
-        );
+  if (step === 5 && checkReport) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
 
-        const data = await res.json();
-        renderReport(data.report, true);
+      <div class="headline">${checkReport.headline}</div>
 
-      } catch (err) {
-        output.innerHTML = "Paid report failed.";
-      }
-    }
+      <div class="card">
+        <strong>Confidence:</strong> ${checkReport.confidence}<br><br>
+        <strong>Indicators:</strong>
+        <ul>
+          ${(checkReport.indicators || []).map(i => `<li>${i}</li>`).join("") || "<li>No indicators</li>"}
+        </ul>
+      </div>
 
-    function renderReport(report, paid) {
-      const output = document.getElementById("output");
+      <button class="primary" onclick="restart()">Run another check</button>
 
-      const indicators =
-        report.indicators?.length
-          ? report.indicators.map(i => `<li>${i.description}</li>`).join("")
-          : "<li>No indicators</li>";
+      <div class="disclaimer">
+        Informational only · Not advice or conclusions
+      </div>
+    `;
+  }
+}
 
-      output.innerHTML = `
-        <div class="report ${report.risk_color}">
-          <h2>${report.headline}</h2>
+async function runCheck() {
+  const value = document.getElementById("input").value.trim();
+  if (!value) return alert("Enter a value");
 
-          <p><strong>Identifier:</strong> ${report.identifier}</p>
-          <p><strong>Confidence:</strong> ${report.confidence}</p>
+  identifier = value;
+  step = 2;
+  render();
 
-          <h3>Indicators</h3>
-          <ul>${indicators}</ul>
+  try {
+    const res = await fetch("http://localhost:10000/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, identifier_type })
+    });
 
-          ${
-            paid
-              ? `<h3>System Notes</h3>
-                 <ul>${report.system_notes.map(n => `<li>${n}</li>`).join("")}</ul>`
-              : `<button onclick="startPayment()">Unlock full report</button>`
-          }
+    const data = await res.json();
+    checkReport = data.report;
 
-          <small>${report.meta.generated_at}</small>
-        </div>
-      `;
-    }
-  </script>
+    step = 3;
+    render();
 
+  } catch {
+    alert("Check failed");
+    step = 1;
+    render();
+  }
+}
+
+async function startPayment() {
+  step = 4;
+  render();
+
+  try {
+    const res = await fetch("http://localhost:10000/pay/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, identifier_type })
+    });
+
+    const data = await res.json();
+    paymentRef = data.payment.ref;
+
+    await confirmPayment();
+
+  } catch {
+    alert("Payment failed");
+    step = 3;
+    render();
+  }
+}
+
+async function confirmPayment() {
+  const res = await fetch(
+    `http://localhost:10000/pay/confirm?ref=${paymentRef}&identifier=${identifier}&identifier_type=${identifier_type}`
+  );
+  const data = await res.json();
+  checkReport = data.report;
+  step = 5;
+  render();
+}
+
+function restart() {
+  step = 1;
+  identifier = "";
+  checkReport = null;
+  render();
+}
+
+render();
+</script>
 </body>
 </html>
