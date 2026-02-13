@@ -9,39 +9,36 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  background: #111111;
-  color: #ffffff;
+  background: #111;
+  color: #fff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 #app {
   min-height: 100vh;
-  width: 100%;
-  background: #111111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.hidden { display: none; }
-
-.report-shell {
+.shell {
+  width: 100%;
   max-width: 420px;
-  margin: 0 auto;
-  padding: 22px;
+  padding: 24px;
 }
 
 .brand {
+  font-size: 28px;
   font-weight: 800;
-  font-size: 26px;
 }
 
-.brand-underline {
+.underline {
   display: flex;
   gap: 6px;
   margin-top: 6px;
 }
 
-.brand-underline span {
+.underline span {
   flex: 1;
   height: 4px;
   border-radius: 2px;
@@ -49,190 +46,186 @@ html, body {
 
 .green { background: #2ecc71; }
 .amber { background: #f39c12; }
-.red   { background: #e74c3c; }
+.red { background: #e74c3c; }
 
-.tagline {
-  margin-top: 26px;
-  font-size: 20px;
-}
+.hidden { display: none; }
 
-.muted {
-  opacity: 0.7;
-  font-size: 13px;
-  margin-top: 12px;
-}
-
-.input {
-  width: 100%;
-  padding: 14px;
-  margin-top: 20px;
-  font-size: 14px;
-  border-radius: 8px;
-  border: none;
-}
-
-.primary, .cta, .secondary {
+input, button {
   width: 100%;
   padding: 14px;
   margin-top: 16px;
   font-size: 15px;
   border-radius: 8px;
   border: none;
-  cursor: pointer;
 }
 
-.primary { background: #ffffff; color: #000000; }
-.cta { background: #f39c12; color: #1a1a1a; }
-.secondary { background: #222222; color: #ffffff; }
-
-.badge {
-  margin-top: 20px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  display: inline-block;
-  font-size: 13px;
+button.primary {
+  background: #fff;
+  color: #000;
+  font-weight: 600;
 }
 
-.badge.amber {
+button.cta {
   background: #f39c12;
-  color: #1a1a1a;
+  color: #000;
+  font-weight: 700;
 }
 
 .card {
   background: #1c1c1c;
-  border-radius: 10px;
   padding: 14px;
-  margin-top: 14px;
+  border-radius: 10px;
+  margin-top: 16px;
 }
 
-.disclaimer {
-  margin-top: 30px;
-  font-size: 11px;
-  opacity: 0.5;
+.muted {
+  opacity: 0.7;
+  font-size: 13px;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 <div id="app">
-<div class="report-shell">
+  <div class="shell">
 
-<header>
-  <div class="brand">justcheckit</div>
-  <div class="brand-underline">
-    <span class="green"></span>
-    <span class="amber"></span>
-    <span class="red"></span>
+    <div class="brand">justcheckit</div>
+    <div class="underline">
+      <span class="green"></span>
+      <span class="amber"></span>
+      <span class="red"></span>
+    </div>
+
+    <!-- SCREEN 1 -->
+    <section id="s1">
+      <p style="margin-top:24px;font-size:18px;">
+        Before you send money, just check.
+      </p>
+
+      <input id="identifier" placeholder="Phone, name, or reference" />
+      <button class="primary" onclick="runCheck()">Just check</button>
+
+      <div class="muted">No signup · No subscription</div>
+    </section>
+
+    <!-- SCREEN 2 -->
+    <section id="s2" class="hidden">
+      <p style="margin-top:32px;font-size:18px;">Checking…</p>
+      <div class="muted">Scanning available indicators</div>
+    </section>
+
+    <!-- SCREEN 3 -->
+    <section id="s3" class="hidden">
+      <p style="margin-top:32px;font-size:18px;">
+        Some risk indicators were detected
+      </p>
+
+      <button class="cta" onclick="unlockPaid()">
+        Unlock full report for $1.25
+      </button>
+    </section>
+
+    <!-- SCREEN 5 -->
+    <section id="s5" class="hidden">
+      <p style="margin-top:32px;font-size:18px;">
+        Full report findings
+      </p>
+
+      <div class="card">
+        <strong>Confidence:</strong>
+        <span id="confidence"></span>
+
+        <br><br>
+        <strong>Indicators:</strong>
+        <ul id="indicators"></ul>
+      </div>
+
+      <button class="primary" onclick="location.reload()">
+        Run another check
+      </button>
+    </section>
+
   </div>
-</header>
-
-<main>
-
-<!-- SCREEN 1 -->
-<section id="s1">
-  <div class="tagline">Before you send money, just check.</div>
-
-  <input
-    id="userInput"
-    class="input"
-    placeholder="Phone number, name, reference, or link"
-  >
-
-  <button class="primary" onclick="runCheck()">Just check</button>
-
-  <div class="muted">No signup · No subscription · No Google login</div>
-</section>
-
-<!-- SCREEN 2 -->
-<section id="s2" class="hidden">
-  <div class="tagline">Checking…</div>
-  <div class="muted">Scanning available indicators</div>
-</section>
-
-<!-- SCREEN 3 -->
-<section id="s3" class="hidden">
-  <div class="badge amber">Amber indicators detected</div>
-
-  <div class="tagline">Some risk indicators were identified</div>
-
-  <div class="muted">
-    This free check confirms that some indicators were present at the time of scanning.
-  </div>
-
-  <button class="cta" onclick="unlockPaid()">Unlock full report for $1.25</button>
-</section>
-
-<!-- SCREEN 5 -->
-<section id="s5" class="hidden">
-  <div class="badge amber">Amber indicator profile</div>
-
-  <div class="tagline">Full report findings</div>
-
-  <div class="card">
-    <strong>Transaction behaviour indicators</strong><br>
-    <span style="opacity:0.6;font-size:12px;">
-      Medium confidence · Observed across similar reports
-    </span>
-  </div>
-
-  <div class="muted" style="font-size:14px;">
-    Users commonly pause before paying, verify details,
-    or choose payment methods that offer protection.
-  </div>
-
-  <button class="secondary">Share justcheckit</button>
-</section>
-
-</main>
-
-<div class="disclaimer">
-  justcheckit provides pre-payment risk indicators, not judgments or guarantees.
-  Always verify independently before sending money.
-</div>
-
-</div>
 </div>
 
 <script>
 function show(id) {
-  document.querySelectorAll("section").forEach(s =>
-    s.classList.add("hidden")
+  ["s1","s2","s3","s5"].forEach(s =>
+    document.getElementById(s).classList.add("hidden")
   );
   document.getElementById(id).classList.remove("hidden");
 }
 
-async function runCheck() {
-  const input = document.getElementById("userInput").value.trim();
-  if (!input) {
-    alert("Please enter something to check.");
-    return;
-  }
+let cachedIdentifier = "";
 
+async function runCheck() {
+  const value = document.getElementById("identifier").value.trim();
+  if (!value) return alert("Enter something to check");
+
+  cachedIdentifier = value;
   show("s2");
 
-  const res = await fetch("/check", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      identifier: input,
-      identifier_type: "phone"
-    })
-  });
+  try {
+    const res = await fetch("/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        identifier: value,
+        identifier_type: "generic"
+      })
+    });
 
-  if (!res.ok) {
+    if (!res.ok) throw new Error("check failed");
+
+    await res.json();
+    show("s3");
+
+  } catch (e) {
     alert("Check failed");
     show("s1");
-    return;
   }
-
-  const data = await res.json();
-  console.log("FREE REPORT:", data);
-
-  show("s3");
 }
 
-function unlockPaid() {
-  show("s5");
+async function unlockPaid() {
+  show("s2");
+
+  try {
+    const init = await fetch("/pay/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        identifier: cachedIdentifier,
+        identifier_type: "generic"
+      })
+    });
+
+    const initData = await init.json();
+
+    const confirm = await fetch(
+      `/pay/confirm?ref=${encodeURIComponent(initData.payment.ref)}&identifier=${encodeURIComponent(cachedIdentifier)}&identifier_type=generic`
+    );
+
+    const data = await confirm.json();
+
+    document.getElementById("confidence").innerText =
+      data.report.confidence || "UNKNOWN";
+
+    const ul = document.getElementById("indicators");
+    ul.innerHTML = "";
+
+    (data.report.indicators || []).forEach(i => {
+      const li = document.createElement("li");
+      li.innerText = i.description || i;
+      ul.appendChild(li);
+    });
+
+    show("s5");
+
+  } catch (e) {
+    alert("Paid flow failed");
+    show("s3");
+  }
 }
 </script>
 
