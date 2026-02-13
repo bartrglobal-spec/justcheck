@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* FORCE REMOVAL OF BROWSER DEFAULTS */
 html, body {
   margin: 0;
   padding: 0;
@@ -17,24 +16,20 @@ html, body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ROOT WRAPPER – THIS IS THE KEY */
 #app {
   min-height: 100vh;
   width: 100%;
   background: #111111;
 }
 
-/* VISIBILITY */
 .hidden { display: none; }
 
-/* LAYOUT */
 .report-shell {
   max-width: 420px;
   margin: 0 auto;
   padding: 22px;
 }
 
-/* BRAND */
 .brand {
   font-weight: 800;
   font-size: 26px;
@@ -56,7 +51,6 @@ html, body {
 .amber { background: #f39c12; }
 .red   { background: #e74c3c; }
 
-/* TEXT ALIASES */
 .tagline {
   margin-top: 26px;
   font-size: 20px;
@@ -68,7 +62,6 @@ html, body {
   margin-top: 12px;
 }
 
-/* INPUT */
 .input {
   width: 100%;
   padding: 14px;
@@ -78,7 +71,6 @@ html, body {
   border: none;
 }
 
-/* BUTTONS */
 .primary, .cta, .secondary {
   width: 100%;
   padding: 14px;
@@ -93,7 +85,6 @@ html, body {
 .cta { background: #f39c12; color: #1a1a1a; }
 .secondary { background: #222222; color: #ffffff; }
 
-/* BADGE */
 .badge {
   margin-top: 20px;
   padding: 6px 10px;
@@ -107,7 +98,6 @@ html, body {
   color: #1a1a1a;
 }
 
-/* CARD */
 .card {
   background: #1c1c1c;
   border-radius: 10px;
@@ -115,7 +105,6 @@ html, body {
   margin-top: 14px;
 }
 
-/* DISCLAIMER */
 .disclaimer {
   margin-top: 30px;
   font-size: 11px;
@@ -124,7 +113,6 @@ html, body {
 </style>
 </head>
 
-<body style="background:#7b0000;">
 <body>
 <div id="app">
 <div class="report-shell">
@@ -144,8 +132,11 @@ html, body {
 <section id="s1">
   <div class="tagline">Before you send money, just check.</div>
 
-  <input id="userInput" class="input"
-    placeholder="Phone number, name, reference, or link">
+  <input
+    id="userInput"
+    class="input"
+    placeholder="Phone number, name, reference, or link"
+  >
 
   <button class="primary" onclick="runCheck()">Just check</button>
 
@@ -204,7 +195,9 @@ html, body {
 
 <script>
 function show(id) {
-  document.querySelectorAll("section").forEach(s => s.classList.add("hidden"));
+  document.querySelectorAll("section").forEach(s =>
+    s.classList.add("hidden")
+  );
   document.getElementById(id).classList.remove("hidden");
 }
 
@@ -217,9 +210,14 @@ async function runCheck() {
 
   show("s2");
 
-  const res = await fetch(
-    `/check?identifier=${encodeURIComponent(input)}&identifier_type=phone`
-  );
+  const res = await fetch("/check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      identifier: input,
+      identifier_type: "phone"
+    })
+  });
 
   if (!res.ok) {
     alert("Check failed");
@@ -227,7 +225,9 @@ async function runCheck() {
     return;
   }
 
-  await res.json();
+  const data = await res.json();
+  console.log("FREE REPORT:", data);
+
   show("s3");
 }
 
