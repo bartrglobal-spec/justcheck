@@ -18,16 +18,22 @@ async function runCheck() {
     });
 
     const data = await res.json();
+
+    if (!data || !data.report) {
+      throw new Error("Invalid check response");
+    }
+
     renderReport(data.report, { paid: false });
 
   } catch (err) {
+    console.error(err);
     output.innerHTML = "Failed to run check.";
   }
 }
 
 /* ===============================
    PAID FLOW — STEP 1
-   Init payment
+   Init payment (MOCK)
    =============================== */
 async function startPayment() {
   const identifier = document.getElementById("identifier").value;
@@ -45,14 +51,21 @@ async function startPayment() {
 
     const data = await res.json();
 
+    if (!data || !data.payment || !data.payment.ref) {
+      throw new Error("Missing payment reference");
+    }
+
+    console.log("MOCK PAYMENT REF:", data.payment.ref);
+
     // MOCK FLOW: immediately confirm payment
-    confirmPayment(
+    await confirmPayment(
       data.payment.ref,
       identifier,
       identifier_type
     );
 
   } catch (err) {
+    console.error(err);
     output.innerHTML = "Payment initiation failed.";
   }
 }
@@ -67,14 +80,19 @@ async function confirmPayment(ref, identifier, identifier_type) {
 
   try {
     const res = await fetch(
-      `/pay/confirm?ref=${encodeURIComponent(ref)}&identifier=${encodeURIComponent(identifier)}&identifier_type=${identifier_type}`
+      `/pay/confirm?ref=${encodeURIComponent(ref)}&identifier=${encodeURIComponent(identifier)}&identifier_type=${encodeURIComponent(identifier_type)}`
     );
 
     const data = await res.json();
 
+    if (!data || !data.report) {
+      throw new Error("Paid report missing");
+    }
+
     renderReport(data.report, { paid: true });
 
   } catch (err) {
+    console.error(err);
     output.innerHTML = "Failed to generate paid report.";
   }
 }
@@ -89,20 +107,20 @@ function renderReport(report, options = {}) {
   const indicatorsHtml =
     (report.indicators || []).length > 0
       ? report.indicators
-          .map(i => `<li>${i.description || i.code}</li>`)
+          .map(i => `<li>${i.description || i.code || i}</li>`)
           .join("")
       : "<li>No indicators detected</li>";
 
   const systemNotesHtml =
     (report.system_notes || []).length > 0
       ? `<ul>${report.system_notes.map(n => `<li>${n}</li>`).join("")}</ul>`
-      : "";
+      : "<p>No additional system notes.</p>";
 
   output.innerHTML = `
     <div class="report ${report.risk_color}">
       <h2>${report.headline}</h2>
 
-      <p><strong>Identifier:</strong> ${report.identifier}</p>
+      <p><strong>Identifier:</strong> ${report.identifier || ""}</p>
       <p><strong>Confidence:</strong> ${report.confidence}</p>
 
       <h3>Indicators</h3>
