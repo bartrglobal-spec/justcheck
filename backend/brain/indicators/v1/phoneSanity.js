@@ -1,5 +1,3 @@
-// brain/indicators/v1/phoneSanity.js
-
 /**
  * PHONE SANITY INDICATOR — REGISTRY-FIRST
  * --------------------------------------
@@ -8,30 +6,34 @@
  * No free text. No verdicts.
  */
 
-module.exports = function phoneSanity(context = {}) {
-  const { identifier, identifier_type } = context;
+module.exports = {
+  id: "phone_sanity",
 
-  // Defensive guard
-  if (!identifier || identifier_type !== "phone") {
-    return null;
-  }
+  run(context = {}) {
+    const { identifier, identifier_type } = context;
 
-  // Normalize to digits only
-  const digits = identifier.replace(/\D/g, "");
+    // Defensive guard
+    if (!identifier || identifier_type !== "phone") {
+      return null;
+    }
 
-  // 🔒 Rule: Very short phone numbers are unusual
-  if (digits.length < 8) {
+    // Normalize to digits only
+    const digits = identifier.replace(/\D/g, "");
+
+    // 🔒 Rule: Very short phone numbers are unusual
+    if (digits.length < 8) {
+      return {
+        code: "PHONE_TOO_SHORT",
+        level: "amber",
+        order: 10
+      };
+    }
+
+    // 🔒 Rule: Format appears plausible
     return {
-      code: "PHONE_TOO_SHORT",
-      level: "amber",
+      code: "PHONE_FORMAT_PLAUSIBLE",
+      level: "green",
       order: 10
     };
   }
-
-  // 🔒 Rule: Format appears plausible
-  return {
-    code: "PHONE_FORMAT_PLAUSIBLE",
-    level: "green",
-    order: 10
-  };
 };

@@ -1,116 +1,76 @@
-const path = require("path");
-const { renderReport } = require("./render");
+/**
+ * Brain (Free Tier)
+ * -----------------
+ * Orchestrates indicator loading, execution, aggregation,
+ * and sanitization into a stable public report.
+ */
 
-const PG_DISABLED = process.env.PG_DISABLED === "true";
+const sanitizeReport = require("./sanitizeReport");
+const { loadIndicators } = require("./indicators/loader");
 
-// 🔒 Persistence (may be disabled)
-let lookupIdentifier = null;
-let recordFirstSeen = null;
-let recordCheck = null;
+async function runBrain(input) {
+  const indicators = loadIndicators({ includePremium: false });
 
-if (!PG_DISABLED) {
-  const persistence = require("./persistence");
-  lookupIdentifier = persistence.lookupIdentifier;
-  recordFirstSeen = persistence.recordFirstSeen;
-  recordCheck = persistence.recordCheck;
-} else {
-  console.log("🧠 Brain running in STATELESS mode (no persistence hooks)");
-}
+  const results = [];
 
-const indicatorRegistry = [];
-
-// 🔒 HARD-RESOLVED INDICATOR LOAD
-const indicatorsPath = path.join(__dirname, "indicators", "index.js");
-
-console.log("🧠 Resolving indicators from:", indicatorsPath);
-
-try {
-  const indicators = require(indicatorsPath);
-
-  if (!Array.isArray(indicators)) {
-    throw new Error("Indicators export is not an array");
-  }
-
-  indicators.sort((a, b) => {
-    const aOrder = typeof a.order === "number" ? a.order : 1000;
-    const bOrder = typeof b.order === "number" ? b.order : 1000;
-    return aOrder - bOrder;
-  });
-
-  indicatorRegistry.push(...indicators);
-} catch (err) {
-  console.error("❌ FAILED TO LOAD INDICATORS");
-  console.error(err.message);
-}
-
-async function runBrain(context = {}) {
-  console.log("🧠 runBrain input:", context);
-
-  const indicators = [];
-  let executionError = false;
-  let history = null;
-
-  let total_checks = 0;
-  let first_seen = null;
-
-  if (!PG_DISABLED && lookupIdentifier) {
+  for (const indicator of indicators) {
     try {
-      history = await lookupIdentifier(context.identifier);
-      total_checks = history?.total_checks ?? 0;
-      first_seen = history?.first_seen ?? null;
-    } catch (err) {
-      executionError = true;
-    }
-  }
+      if (typeof indicator.run !== "function") continue;
 
-  if (indicatorRegistry.length === 0) {
-    executionError = true;
-  }
+      const outcome = await indicator.run(input);
 
-  for (const indicator of indicatorRegistry) {
-    try {
-      const result = indicator({ ...context, history });
-      if (result) {
-        indicators.push({ ...result });
+      if (outcome) {
+        results.push({
+          id: indicator.id,
+          level: outcome.level,
+          code: outcome.code,
+          order: indicator.order ?? 100
+        });
       }
     } catch (err) {
-      executionError = true;
+      // Silent fail — indicators must never break the brain
     }
   }
 
-  let confidence = "LOW";
+  const riskLevels = results.map(r => r.level);
 
-  if (indicators.some(i => i.level === "red")) {
-    confidence = "HIGH";
-  } else if (indicators.some(i => i.level === "amber")) {
-    confidence = "MEDIUM";
+  let risk_color = "green";
+  let confidence = "low";
+
+  if (riskLevels.includes("red")) {
+    risk_color = "red";
+    confidence = "high";
+  } else if (riskLevels.includes("amber")) {
+    risk_color = "amber";
+    confidence = "medium";
   }
 
-  if (executionError && confidence === "LOW") {
-    confidence = "MEDIUM";
-  }
+  const headline =
+    results.length === 0
+      ? "No significant risk indicators detected"
+      : "Potential risk indicators detected";
 
-  if (!PG_DISABLED && recordCheck) {
-    try {
-      await recordCheck(context);
-    } catch (err) {}
-  }
+  const report = {
+    identifier: input.identifier,
+    identifier_type: input.identifier_type,
 
-  return renderReport({
-    identifier: context.identifier,
-    identifier_type: context.identifier_type,
     confidence,
-    indicators,
+    risk_color,
+    headline,
+
+    indicators: results.sort((a, b) => a.order - b.order),
+    system_notes: [],
+
     meta: {
-      total_checks,
-      first_seen
-    },
-    context: {
-      limitedSources: executionError,
-      conservativeMode: true,
-      outdatedSignals: false
+      total_checks: indicators.length,
+      first_seen: null,
+      generated_at: new Date().toISOString()
     }
-  });
+  };
+
+  return sanitizeReport(report);
 }
 
-module.exports = { runBrain };
+module.exports = {
+  runBrain
+};

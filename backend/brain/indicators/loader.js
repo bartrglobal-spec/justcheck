@@ -1,29 +1,32 @@
 /**
  * Indicator Loader
  * ----------------
- * Loads the indicator catalog into memory.
- *
- * IMPORTANT:
- * - Does NOT evaluate indicators
- * - Does NOT score indicators
- * - Does NOT expose indicators to users
- *
- * This exists so future steps can selectively
- * include / exclude premium indicators.
+ * Loads executable indicator modules.
+ * No evaluation, no scoring, no filtering logic.
  */
 
-const catalog = require("./catalog");
+const path = require("path");
+const fs = require("fs");
 
-function loadIndicators(options = {}) {
-  const {
-    includePremium = false
-  } = options;
+function loadIndicators({ includePremium = false } = {}) {
+  const indicatorsDir = path.join(__dirname, "v1");
 
-  if (!includePremium) {
-    return catalog.filter(indicator => indicator.premium === false);
+  const files = fs
+    .readdirSync(indicatorsDir)
+    .filter(f => f.endsWith(".js") && !f.startsWith("_") && f !== "index.js");
+
+  const indicators = [];
+
+  for (const file of files) {
+    const mod = require(path.join(indicatorsDir, file));
+
+    if (!mod || typeof mod.run !== "function") continue;
+    if (mod.premium === true && !includePremium) continue;
+
+    indicators.push(mod);
   }
 
-  return catalog;
+  return indicators;
 }
 
 module.exports = {

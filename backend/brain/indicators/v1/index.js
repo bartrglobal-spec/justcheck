@@ -1,5 +1,8 @@
-// backend/brain/indicators/v1/index.js
+/**
+ * v1 Indicator Registry
+ * ---------------------
+ * Exists only to allow explicit imports if needed later.
+ * Loader scans directory directly.
+ */
 
-module.exports = [
-  require("./phoneSanity")
-];
+module.exports = {};
