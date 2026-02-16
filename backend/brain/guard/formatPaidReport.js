@@ -1,4 +1,4 @@
-export function formatPaidReport(brainResult = {}) {
+function formatPaidReport(brainResult = {}) {
   const {
     confidence,
     indicators = [],
@@ -18,10 +18,10 @@ export function formatPaidReport(brainResult = {}) {
       "There is a healthy amount of publicly observable information connected to this identifier. Nothing immediately stands out as unusual, but this is not a guarantee of safety.";
   } else if (level === "medium") {
     summary =
-      "There is a mix of available information and uncertainty connected to this identifier. Some information is present, but it is not fully clear.";
+      "There is a mix of available information and uncertainty connected to this identifier. Some signals are present, but they are not conclusive.";
   } else if (level === "high") {
     summary =
-      "Very little reliable public information could be found for this identifier. This does not mean something is wrong, but it does mean extra caution may be appropriate.";
+      "Very little reliable public information could be found for this identifier. This does not mean something is wrong, but it does mean caution is reasonable.";
   } else {
     summary =
       "There is not enough information available to confidently describe this identifier.";
@@ -49,3 +49,5 @@ export function formatPaidReport(brainResult = {}) {
       "This report provides informational context only. It is not a recommendation, judgment, or guarantee. Always use your own judgment before sending money."
   };
 }
+
+module.exports = { formatPaidReport };

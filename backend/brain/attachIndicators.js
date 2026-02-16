@@ -1,40 +1,22 @@
-/**
- * attachIndicators
- * ----------------
- * Attaches indicator metadata to the brain result
- * WITHOUT affecting scoring, confidence, or output.
- *
- * IMPORTANT GUARANTEES:
- * - No mutation of existing fields
- * - No logic execution
- * - Indicators are INTERNAL ONLY
- */
+import indicators from "./indicators.js";
 
-const { loadIndicators } = require("./indicators/loader");
+export default function attachIndicators(brain = {}) {
+  const results = [];
 
-function attachIndicators(brainResult, options = {}) {
-  const {
-    includePremium = false
-  } = options;
+  if (!brain || !brain.identifier || !brain.identifier_type) {
+    return results;
+  }
 
-  // Defensive clone (do not mutate original result)
-  const result = {
-    ...brainResult
-  };
+  for (const indicator of indicators) {
+    try {
+      const res = indicator(brain);
+      if (res) {
+        results.push(res);
+      }
+    } catch (err) {
+      // Indicator failures are ignored by design
+    }
+  }
 
-  // Load indicators (free or full set)
-  const indicators = loadIndicators({ includePremium });
-
-  // Attach under a NON-EXPORTED, INTERNAL key
-  Object.defineProperty(result, "__indicators", {
-    value: indicators,
-    enumerable: false, // 🔐 critical: will not appear in JSON
-    writable: false
-  });
-
-  return result;
+  return results;
 }
-
-module.exports = {
-  attachIndicators
-};

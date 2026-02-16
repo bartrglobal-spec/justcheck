@@ -1,23 +1,31 @@
-/**
- * runPaidBrain
- * ------------
- * Executes the brain with premium indicators enabled.
- *
- * IMPORTANT:
- * - Does NOT replace runBrain
- * - Does NOT affect free checks
- * - Explicit opt-in only
- */
+import { guardInput } from "./guard/index.js";
+import { formatPaidReport } from "./formatPaidReport.js";
+import runBrain from "./runBrain.js";
 
-const runBrain = require("./brain");
-const { attachIndicators } = require("./attachIndicators");
+export default async function runPaidBrain(input = {}) {
+  // 1. Guard input
+  const guard = guardInput(input);
 
-function runPaidBrain(input) {
-  // Run normal brain first (free-safe path)
-  const baseResult = runBrain(input);
+  if (!guard.allowed) {
+    return {
+      error: "INPUT_NOT_ALLOWED",
+      reason: guard.reason
+    };
+  }
 
-  // Re-attach indicators with premium enabled
-  return attachIndicators(baseResult, { includePremium: true });
+  // 2. Run core brain
+  const brainResult = await runBrain({
+    identifier: guard.identifier,
+    identifier_type: guard.identifier_type,
+    paid: true
+  });
+
+  // 3. Format paid report
+  const paidReport = formatPaidReport({
+    ...brainResult,
+    identifier: guard.identifier,
+    identifier_type: guard.identifier_type
+  });
+
+  return paidReport;
 }
-
-module.exports = runPaidBrain;

@@ -1,65 +1,28 @@
-// backend/brain/explain.js
+export default function explain(brain = {}) {
+  const level = brain.confidence?.level || "unknown";
 
-/**
- * Explanation Assembler
- * ---------------------
- * Builds a calm, human explanation from
- * registry-backed indicators.
- *
- * This layer adds perceived value without
- * adding risk, judgment, or advice.
- */
-
-function assembleExplanation({ signal, indicators }) {
-  // Absolute fallback (should be rare)
-  if (!indicators) {
-    return "This check completed successfully.";
-  }
-
-  // Group indicators by level
-  const byLevel = {
-    green: [],
-    amber: [],
-    red: []
-  };
-
-  for (const ind of indicators) {
-    if (byLevel[ind.level]) {
-      byLevel[ind.level].push(ind);
-    }
-  }
-
-  // 🔴 RED — elevated indicators dominate
-  if (byLevel.red.length > 0) {
+  if (level === "low") {
     return (
-      "Some elevated risk indicators were detected. " +
-      byLevel.red.map(i => i.user_text).join(" ")
+      "There is a reasonable amount of publicly visible information connected to this identifier. " +
+      "Nothing immediately stands out as unusual, but this does not guarantee safety."
     );
   }
 
-  // 🟠 AMBER — cautionary indicators
-  if (byLevel.amber.length > 0) {
+  if (level === "medium") {
     return (
-      "Some cautionary indicators were observed. " +
-      byLevel.amber.map(i => i.user_text).join(" ")
+      "Some public information is available for this identifier, but there are gaps or inconsistencies. " +
+      "People often take a moment to think when information is mixed or incomplete."
     );
   }
 
-  // 🟢 GREEN — explicit positive confirmation
-  if (byLevel.green.length > 0) {
+  if (level === "high") {
     return (
-      "No concerning indicators were found during this check. " +
-      byLevel.green.map(i => i.user_text).join(" ")
+      "Very little reliable public information could be found for this identifier. " +
+      "This does not mean there is a problem, but it does mean uncertainty is higher than usual."
     );
   }
 
-  // 🟢 GREEN (silent pass) — nothing triggered
   return (
-    "This check did not surface any notable indicators. " +
-    "The identifier passed basic format, consistency, and availability checks."
+    "There is not enough information available to clearly describe this identifier."
   );
 }
-
-module.exports = {
-  assembleExplanation
-};

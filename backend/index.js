@@ -4,6 +4,11 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Brain imports
+import { guardInput } from "./brain/guard/index.js";
+import runPaidBrain from "./brain/runPaidBrain.js";
+import { formatPaidReport } from "./brain/formatPaidReport.js";
+
 dotenv.config();
 
 const app = express();
@@ -19,6 +24,45 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* =========================
+   PAID CHECK ENDPOINT
+========================= */
+app.post("/check/paid", async (req, res) => {
+  try {
+    // 1. Guard input
+    const guard = guardInput(req.body);
+
+    if (!guard.allowed) {
+      return res.json({
+        ok: false,
+        reason: guard.reason
+      });
+    }
+
+    // 2. Run paid brain
+    const brainResult = await runPaidBrain({
+      identifier: guard.identifier,
+      identifier_type: guard.identifier_type
+    });
+
+    // 3. Format paid report
+    const report = formatPaidReport(brainResult);
+
+    // 4. Return to frontend
+    return res.json({
+      ok: true,
+      report
+    });
+
+  } catch (err) {
+    console.error("PAID CHECK ERROR:", err);
+    return res.status(500).json({
+      ok: false,
+      error: "INTERNAL_ERROR"
+    });
+  }
 });
 
 /* =========================

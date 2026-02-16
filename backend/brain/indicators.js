@@ -1,4 +1,5 @@
-// Placeholder indicator list
-// Will be populated in Step 7+
+import genericPattern from "./indicators/v1/generic_pattern.js";
 
-module.exports = [];
+export default [
+  genericPattern
+];

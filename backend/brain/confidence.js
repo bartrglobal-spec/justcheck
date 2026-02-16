@@ -1,40 +1,22 @@
-console.log("🧠 confidence.js loaded");
+export default function buildConfidence(indicators = []) {
+  // Very simple v1 confidence model
+  // This is intentionally conservative and non-judgmental
 
-function deriveConfidence(indicators = []) {
-  if (!Array.isArray(indicators)) {
-    return {
-      level: "amber",
-      summary: "Some Risk Indicators",
-      note_code: "LIMITED_PROCESSING"
-    };
+  let level = "medium";
+  let score = 50;
+
+  if (!Array.isArray(indicators) || indicators.length === 0) {
+    level = "high";
+    score = 75;
   }
 
-  const hasRed = indicators.some(i => i.level === "red");
-  const hasAmber = indicators.some(i => i.level === "amber");
-
-  if (hasRed) {
-    return {
-      level: "red",
-      summary: "Elevated Risk Indicators",
-      note_code: "ELEVATED_RISK"
-    };
-  }
-
-  if (hasAmber) {
-    return {
-      level: "amber",
-      summary: "Some Risk Indicators",
-      note_code: "SOME_RISK"
-    };
+  if (indicators.length >= 2) {
+    level = "low";
+    score = 25;
   }
 
   return {
-    level: "green",
-    summary: "Low Risk Indicators",
-    note_code: "LOW_RISK"
+    level,
+    score
   };
 }
-
-module.exports = {
-  deriveConfidence
-};
