@@ -52,7 +52,6 @@ app.post("/check", (req, res) => {
 ========================= */
 app.post("/check/paid", async (req, res) => {
   try {
-    // 1. Guard input
     const guard = guardInput(req.body);
 
     if (!guard.allowed) {
@@ -62,16 +61,13 @@ app.post("/check/paid", async (req, res) => {
       });
     }
 
-    // 2. Run paid brain
     const brainResult = await runPaidBrain({
       identifier: guard.identifier,
       identifier_type: guard.identifier_type
     });
 
-    // 3. Format paid report
     const report = formatPaidReport(brainResult);
 
-    // 4. Return to frontend
     return res.json({
       ok: true,
       report
@@ -87,7 +83,7 @@ app.post("/check/paid", async (req, res) => {
 });
 
 /* =========================
-   PAYPAL TOKEN
+   PAYPAL ACCESS TOKEN
 ========================= */
 async function getPayPalAccessToken() {
   const auth = Buffer.from(
@@ -117,6 +113,10 @@ app.post("/pay/create", async (req, res) => {
   try {
     const token = await getPayPalAccessToken();
 
+    // IMPORTANT: dynamic base URL
+    const baseUrl =
+      process.env.APP_BASE_URL || "http://localhost:3000";
+
     const response = await fetch(
       `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
       {
@@ -136,8 +136,8 @@ app.post("/pay/create", async (req, res) => {
             }
           ],
           application_context: {
-            return_url: "http://localhost:3000/?paid=1",
-            cancel_url: "http://localhost:3000/?cancel=1"
+            return_url: `${baseUrl}/?paid=1`,
+            cancel_url: `${baseUrl}/?cancel=1`
           }
         })
       }
