@@ -25,17 +25,21 @@ body {
   margin:0;
   background:var(--bg);
   color:var(--text);
-  display:flex;
-  justify-content:center;
-  align-items:center;
   min-height:100vh;
 }
 
 .container {
   width:100%;
   max-width:420px;
-  padding:32px 20px;
+  margin:0 auto;
+  padding:28px 20px 40px;
+  display:flex;
+  flex-direction:column;
+}
+
+.header {
   text-align:center;
+  margin-bottom:34px;
 }
 
 .logo-text {
@@ -49,6 +53,7 @@ body {
   width:160px;
   background:linear-gradient(to right,var(--green),var(--amber),var(--red));
   border-radius:2px;
+  overflow:hidden;
 }
 
 .scanning .logo-line::before {
@@ -65,14 +70,34 @@ body {
   to   { transform:translateX(260%); }
 }
 
-.headline { margin-top:26px; font-size:18px; }
-.subtext { margin-top:10px; font-size:14px; color:var(--muted); }
+.main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
+}
+
+.headline {
+  font-size:18px;
+  margin-bottom:20px;
+}
+
+.subtext {
+  font-size:14px;
+  color:var(--muted);
+  margin-top:10px;
+}
+
+.action-group {
+  margin-top:12px;
+}
 
 input, button {
   width:100%;
   padding:14px;
   font-size:16px;
-  margin-top:22px;
+  margin-top:18px;
   border-radius:6px;
   border:none;
 }
@@ -92,7 +117,7 @@ button.secondary {
 
 .card {
   margin-top:22px;
-  padding:16px;
+  padding:18px;
   background:#161922;
   border-radius:10px;
   text-align:left;
@@ -105,17 +130,30 @@ button.secondary {
   font-size:13px;
   font-weight:600;
   color:#000;
-  margin-bottom:12px;
+  margin-bottom:16px;
 }
 
 .indicator.green { background:var(--green); }
 .indicator.amber { background:var(--amber); }
 .indicator.red   { background:var(--red); }
 
+.subtle-indicator {
+  display:inline-block;
+  width:44px;
+  height:6px;
+  border-radius:4px;
+  margin:14px auto 0;
+}
+
+.subtle-indicator.green { background:var(--green); }
+.subtle-indicator.amber { background:var(--amber); }
+.subtle-indicator.red { background:var(--red); }
+
 .disclaimer {
-  margin-top:22px;
+  margin-top:26px;
   font-size:12px;
   color:#7d7d7d;
+  text-align:center;
 }
 </style>
 </head>
@@ -131,63 +169,82 @@ let paidToken = null;
 
 const app = document.getElementById("app");
 
-/* =========================
-   RENDER
-========================= */
+function renderHeader(scanning=false) {
+  return `
+    <div class="header ${scanning ? "scanning" : ""}">
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+    </div>
+  `;
+}
+
 function render() {
   app.className = "container";
+  if (step === 2 || step === 4) app.classList.add("scanning");
 
   if (step === 1) {
     app.innerHTML = `
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line"></div>
-      <div class="headline">Before you pay — check first</div>
-      <input id="input" placeholder="Name, phone, email, or reference">
-      <button class="primary" onclick="runCheck()">Check now</button>
-      <div class="disclaimer">Informational only. No advice or conclusions.</div>
+      ${renderHeader()}
+      <div class="main">
+        <div class="headline">Before you pay — check first</div>
+        <div class="action-group">
+          <input id="input" placeholder="Name, phone number, email, or reference">
+          <button class="primary" onclick="runCheck()">Check now</button>
+        </div>
+        <div class="disclaimer">Informational only. No advice or conclusions.</div>
+      </div>
     `;
   }
 
   if (step === 2) {
-    app.classList.add("scanning");
     app.innerHTML = `
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line"></div>
-      <div class="headline">Reviewing available context…</div>
-      <div class="subtext">This usually takes a few seconds</div>
+      ${renderHeader(true)}
+      <div class="main">
+        <div class="headline">Reviewing available context…</div>
+        <div class="subtext">This usually takes a few seconds</div>
+      </div>
     `;
   }
 
   if (step === 3) {
+    const level = (checkReport?.confidence || "Moderate").toLowerCase();
+    const colorClass =
+      level.includes("low") ? "green" :
+      level.includes("high") ? "red" : "amber";
+
     app.innerHTML = `
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line"></div>
-      <div class="headline">Some relevant information was found</div>
-      <div class="card">
-        The full report explains what was observed, what it does <em>not</em> mean,
-        and what people typically consider next before proceeding.
+      ${renderHeader()}
+      <div class="main">
+        <div class="headline">Some relevant information was found</div>
+        <div class="subtle-indicator ${colorClass}"></div>
+
+        <div class="card">
+          The full report explains what was observed, what is unclear,
+          and how people typically think about this kind of result
+          before proceeding.
+        </div>
+
+        <button class="primary" onclick="startPayment()">
+          Unlock full report — $1.49
+        </button>
+
+        <div class="subtext">(charged in your local currency)</div>
+        <div class="disclaimer">Informational only. No advice or conclusions.</div>
       </div>
-      <button class="primary" onclick="startPayment()">
-        Unlock full report — $1.49
-      </button>
-      <div class="subtext">(charged in your local currency)</div>
-      <div class="disclaimer">Informational only. No advice or conclusions.</div>
     `;
   }
 
   if (step === 4) {
-    app.classList.add("scanning");
     app.innerHTML = `
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line"></div>
-      <div class="headline">Verifying payment…</div>
-      <div class="subtext">Preparing your report</div>
+      ${renderHeader(true)}
+      <div class="main">
+        <div class="headline">Verifying payment…</div>
+        <div class="subtext">Preparing your report</div>
+      </div>
     `;
   }
 
-  /* =========================
-     SCREEN 5 — REPLACED ONLY
-  ========================= */
+  /* SCREEN 5 — PAID REPORT (UPDATED) */
   if (step === 5 && checkReport) {
     const level = (checkReport.confidence || "Moderate").toLowerCase();
     const colorClass =
@@ -195,51 +252,83 @@ function render() {
       level.includes("high") ? "red" : "amber";
 
     app.innerHTML = `
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line" style="width:110px;"></div>
+      ${renderHeader()}
+      <div class="main">
+        <div class="headline">What this check shows</div>
 
-      <div class="headline">What we found</div>
+        <div class="card">
+          <span class="indicator ${colorClass}">
+            Overall confidence: ${checkReport.confidence || "Moderate"}
+          </span>
 
-      <div class="card">
-        <span class="indicator ${colorClass}">
-          Overall confidence: ${checkReport.confidence || "Moderate"}
-        </span>
+          <p>
+            We looked at what is publicly visible around the information you entered
+            and compared it with how similar situations usually look before a payment
+            is made.
+          </p>
 
-        <p>
-          We reviewed available public context, observable patterns,
-          and how similar situations typically appear at this stage.
-        </p>
+          <p>
+            This does not judge the person or business involved. It explains how much
+            information is available, and how clear or unclear that information is
+            right now.
+          </p>
 
-        <p>
-          Nothing here confirms intent, outcomes, or wrongdoing.
-          It highlights context people usually want to understand
-          before money changes hands.
-        </p>
+          <strong>What looked normal</strong>
+          <ul>
+            <li>Details that don’t stand out as unusual</li>
+            <li>No obvious contradictions in visible information</li>
+            <li>Patterns that appear generally consistent</li>
+          </ul>
 
-        <strong>What was checked</strong>
-        <ul>
-          <li>Public visibility and footprint patterns</li>
-          <li>Consistency across known identifiers</li>
-          <li>Timing, frequency, and structural context</li>
-          <li>Common indicators people look for before proceeding</li>
-        </ul>
-      </div>
+          <p>
+            These points add some reassurance, but they don’t tell the full story
+            on their own.
+          </p>
 
-      <button class="primary" onclick="restart()">Run another check</button>
-      <button class="secondary" onclick="shareJustCheck()">
-        If you know someone this might help, please share
-      </button>
+          <strong>What was unclear or missing</strong>
+          <ul>
+            <li>Limited public information in certain areas</li>
+            <li>Gaps where more context would normally be expected</li>
+            <li>Not enough history or detail to be fully confident</li>
+          </ul>
 
-      <div class="disclaimer">
-        Informational only. No advice, accusations, or conclusions.
+          <p>
+            This is common and does not mean something is wrong. It simply limits
+            certainty.
+          </p>
+
+          <strong>How people usually think about this result</strong>
+          <p>
+            When people run a check like this, they’re usually trying to avoid
+            surprises.
+          </p>
+
+          <p>
+            In this case, there is some information to rely on, but not enough to
+            remove all uncertainty. That’s why this result sits in the middle —
+            neither clearly reassuring nor clearly concerning.
+          </p>
+
+          <p>
+            This report is meant to give you clarity about what is known and what
+            is not, before money changes hands.
+          </p>
+        </div>
+
+        <button class="primary" onclick="restart()">Run another check</button>
+        <button class="secondary" onclick="shareJustCheck()">
+          If you know someone this might help, please share
+        </button>
+
+        <div class="disclaimer">
+          Informational only. No advice, accusations, or conclusions.
+        </div>
       </div>
     `;
   }
 }
 
-/* =========================
-   ACTIONS
-========================= */
+/* ACTIONS (unchanged) */
 function runCheck() {
   identifier = document.getElementById("input").value.trim();
   if (!identifier) return;
@@ -277,9 +366,6 @@ async function startPayment() {
   window.location.href = approve.href;
 }
 
-/* =========================
-   PAYPAL RETURN
-========================= */
 const params = new URLSearchParams(window.location.search);
 if (params.get("paid") === "1" && params.get("token")) {
   paidToken = params.get("token");
