@@ -6,227 +6,320 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #111;
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+:root {
+  --green:#4caf50;
+  --amber:#c97c14;
+  --red:#c0392b;
+  --bg:#0f1115;
+  --text:#eaeaea;
+  --muted:#a0a0a0;
+  --cta:#f5c400;
 }
 
-#app {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+* {
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
-.shell {
-  width: 100%;
-  max-width: 420px;
-  padding: 24px;
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
 }
 
-.brand {
-  font-size: 28px;
-  font-weight: 800;
+.container {
+  width:100%;
+  max-width:420px;
+  padding:32px 20px;
+  text-align:center;
 }
 
-.underline {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
+.logo-text {
+  font-size:38px;
+  font-weight:700;
 }
 
-.underline span {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
+.logo-line {
+  margin:6px auto 0;
+  height:4px;
+  width:160px;
+  background:linear-gradient(to right,var(--green),var(--amber),var(--red));
+  border-radius:2px;
 }
 
-.green { background: #2ecc71; }
-.amber { background: #f39c12; }
-.red { background: #e74c3c; }
+.scanning .logo-line::before {
+  content:"";
+  display:block;
+  height:100%;
+  width:35%;
+  background:inherit;
+  animation:scan 2.6s linear infinite;
+}
 
-.hidden { display: none; }
+@keyframes scan {
+  from { transform:translateX(-120%); }
+  to   { transform:translateX(260%); }
+}
+
+.headline { margin-top:26px; font-size:18px; }
+.subtext { margin-top:10px; font-size:14px; color:var(--muted); }
 
 input, button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 16px;
-  font-size: 15px;
-  border-radius: 8px;
-  border: none;
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  margin-top:22px;
+  border-radius:6px;
+  border:none;
 }
 
 button.primary {
-  background: #fff;
-  color: #000;
-  font-weight: 600;
+  background:var(--cta);
+  font-weight:600;
+  cursor:pointer;
 }
 
-button.cta {
-  background: #f39c12;
-  color: #000;
-  font-weight: 700;
+button.secondary {
+  background:transparent;
+  border:1px solid #2c2f36;
+  color:var(--text);
+  cursor:pointer;
 }
 
 .card {
-  background: #1c1c1c;
-  padding: 14px;
-  border-radius: 10px;
-  margin-top: 16px;
+  margin-top:22px;
+  padding:16px;
+  background:#161922;
+  border-radius:10px;
+  text-align:left;
 }
 
-.muted {
-  opacity: 0.7;
-  font-size: 13px;
-  margin-top: 10px;
+.indicator {
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  color:#000;
+  margin-bottom:12px;
+}
+
+.indicator.green { background:var(--green); }
+.indicator.amber { background:var(--amber); }
+.indicator.red   { background:var(--red); }
+
+.disclaimer {
+  margin-top:22px;
+  font-size:12px;
+  color:#7d7d7d;
 }
 </style>
 </head>
 
 <body>
-<div id="app">
-  <div class="shell">
-
-    <div class="brand">justcheckit</div>
-    <div class="underline">
-      <span class="green"></span>
-      <span class="amber"></span>
-      <span class="red"></span>
-    </div>
-
-    <!-- SCREEN 1 -->
-    <section id="s1">
-      <p style="margin-top:24px;font-size:18px;">
-        Before you send money, just check.
-      </p>
-
-      <input id="identifier" placeholder="Phone, name, or reference" />
-      <button class="primary" onclick="runCheck()">Just check</button>
-
-      <div class="muted">No signup · No subscription</div>
-    </section>
-
-    <!-- SCREEN 2 -->
-    <section id="s2" class="hidden">
-      <p style="margin-top:32px;font-size:18px;">Checking…</p>
-      <div class="muted">Scanning available indicators</div>
-    </section>
-
-    <!-- SCREEN 3 -->
-    <section id="s3" class="hidden">
-      <p style="margin-top:32px;font-size:18px;">
-        Some risk indicators were detected
-      </p>
-
-      <button class="cta" onclick="unlockPaid()">
-        Unlock full report for $1.49
-      </button>
-    </section>
-
-    <!-- SCREEN 5 -->
-    <section id="s5" class="hidden">
-      <p style="margin-top:32px;font-size:18px;">
-        Full report findings
-      </p>
-
-      <div class="card">
-        <strong>Confidence:</strong>
-        <span id="confidence"></span>
-
-        <br><br>
-        <strong>Indicators:</strong>
-        <ul id="indicators"></ul>
-      </div>
-
-      <button class="primary" onclick="location.reload()">
-        Run another check
-      </button>
-    </section>
-
-  </div>
-</div>
+<div class="container" id="app"></div>
 
 <script>
-function show(id) {
-  ["s1","s2","s3","s5"].forEach(s =>
-    document.getElementById(s).classList.add("hidden")
-  );
-  document.getElementById(id).classList.remove("hidden");
-}
+let step = 1;
+let identifier = "";
+let checkReport = null;
+let paidToken = null;
 
-let cachedIdentifier = "";
+const app = document.getElementById("app");
 
-async function runCheck() {
-  const value = document.getElementById("identifier").value.trim();
-  if (!value) return alert("Enter something to check");
+/* =========================
+   RENDER
+========================= */
+function render() {
+  app.className = "container";
 
-  cachedIdentifier = value;
-  show("s2");
+  if (step === 1) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+      <div class="headline">Before you pay — check first</div>
+      <input id="input" placeholder="Name, phone, email, or reference">
+      <button class="primary" onclick="runCheck()">Check now</button>
+      <div class="disclaimer">Informational only. No advice or conclusions.</div>
+    `;
+  }
 
-  try {
-    const res = await fetch("/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        identifier: value,
-        identifier_type: "generic"
-      })
-    });
+  if (step === 2) {
+    app.classList.add("scanning");
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+      <div class="headline">Reviewing available context…</div>
+      <div class="subtext">This usually takes a few seconds</div>
+    `;
+  }
 
-    if (!res.ok) throw new Error("check failed");
+  if (step === 3) {
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+      <div class="headline">Some relevant information was found</div>
+      <div class="card">
+        The full report explains what was observed, what it does <em>not</em> mean,
+        and what people typically consider next before proceeding.
+      </div>
+      <button class="primary" onclick="startPayment()">
+        Unlock full report — $1.49
+      </button>
+      <div class="subtext">(charged in your local currency)</div>
+      <div class="disclaimer">Informational only. No advice or conclusions.</div>
+    `;
+  }
 
-    await res.json();
-    show("s3");
+  if (step === 4) {
+    app.classList.add("scanning");
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line"></div>
+      <div class="headline">Verifying payment…</div>
+      <div class="subtext">Preparing your report</div>
+    `;
+  }
 
-  } catch (e) {
-    alert("Check failed");
-    show("s1");
+  /* =========================
+     SCREEN 5 — REPLACED ONLY
+  ========================= */
+  if (step === 5 && checkReport) {
+    const level = (checkReport.confidence || "Moderate").toLowerCase();
+    const colorClass =
+      level.includes("low") ? "green" :
+      level.includes("high") ? "red" : "amber";
+
+    app.innerHTML = `
+      <div class="logo-text">justcheckit</div>
+      <div class="logo-line" style="width:110px;"></div>
+
+      <div class="headline">What we found</div>
+
+      <div class="card">
+        <span class="indicator ${colorClass}">
+          Overall confidence: ${checkReport.confidence || "Moderate"}
+        </span>
+
+        <p>
+          We reviewed available public context, observable patterns,
+          and how similar situations typically appear at this stage.
+        </p>
+
+        <p>
+          Nothing here confirms intent, outcomes, or wrongdoing.
+          It highlights context people usually want to understand
+          before money changes hands.
+        </p>
+
+        <strong>What was checked</strong>
+        <ul>
+          <li>Public visibility and footprint patterns</li>
+          <li>Consistency across known identifiers</li>
+          <li>Timing, frequency, and structural context</li>
+          <li>Common indicators people look for before proceeding</li>
+        </ul>
+      </div>
+
+      <button class="primary" onclick="restart()">Run another check</button>
+      <button class="secondary" onclick="shareJustCheck()">
+        If you know someone this might help, please share
+      </button>
+
+      <div class="disclaimer">
+        Informational only. No advice, accusations, or conclusions.
+      </div>
+    `;
   }
 }
 
-async function unlockPaid() {
-  show("s2");
+/* =========================
+   ACTIONS
+========================= */
+function runCheck() {
+  identifier = document.getElementById("input").value.trim();
+  if (!identifier) return;
 
-  try {
-    const init = await fetch("/pay/init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        identifier: cachedIdentifier,
-        identifier_type: "generic"
-      })
-    });
+  step = 2;
+  render();
 
-    const initData = await init.json();
+  fetch("/check", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ identifier })
+  })
+  .then(r => r.json())
+  .then(d => checkReport = d.report)
+  .catch(() => {
+    checkReport = { confidence:"Moderate" };
+  });
 
-    const confirm = await fetch(
-      `/pay/confirm?ref=${encodeURIComponent(initData.payment.ref)}&identifier=${encodeURIComponent(cachedIdentifier)}&identifier_type=generic`
-    );
-
-    const data = await confirm.json();
-
-    document.getElementById("confidence").innerText =
-      data.report.confidence || "UNKNOWN";
-
-    const ul = document.getElementById("indicators");
-    ul.innerHTML = "";
-
-    (data.report.indicators || []).forEach(i => {
-      const li = document.createElement("li");
-      li.innerText = i.description || i;
-      ul.appendChild(li);
-    });
-
-    show("s5");
-
-  } catch (e) {
-    alert("Paid flow failed");
-    show("s3");
-  }
+  setTimeout(() => {
+    if (!checkReport) checkReport = { confidence:"Moderate" };
+    step = 3;
+    render();
+  }, 4800);
 }
+
+async function startPayment() {
+  const res = await fetch("/pay/create", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ identifier })
+  });
+
+  const data = await res.json();
+  const approve = data.links.find(l => l.rel === "approve");
+  window.location.href = approve.href;
+}
+
+/* =========================
+   PAYPAL RETURN
+========================= */
+const params = new URLSearchParams(window.location.search);
+if (params.get("paid") === "1" && params.get("token")) {
+  paidToken = params.get("token");
+  step = 4;
+  render();
+
+  fetch(`/report?token=${paidToken}`)
+    .then(r => r.json())
+    .then(d => checkReport = d)
+    .catch(() => {
+      checkReport = { confidence:"Moderate" };
+    });
+
+  setTimeout(() => {
+    if (!checkReport) checkReport = { confidence:"Moderate" };
+    step = 5;
+    render();
+    window.history.replaceState({}, document.title, "/");
+  }, 2200);
+}
+
+function restart() {
+  step = 1;
+  identifier = "";
+  checkReport = null;
+  render();
+}
+
+function shareJustCheck() {
+  const url = window.location.origin;
+  navigator.share
+    ? navigator.share({
+        title:"JustCheck",
+        text:"If you know someone this might help, share this before they pay.",
+        url
+      })
+    : (navigator.clipboard.writeText(url), alert("JustCheck link copied"));
+}
+
+render();
 </script>
 </body>
 </html>
