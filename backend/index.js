@@ -1,150 +1,96 @@
-require("dotenv").config();
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const express = require("express");
-const bodyParser = require("body-parser");
-const path = require("path");
-
-const { guardRun } = require("./brain/guard");
-const { formatPaidReport } = require("./brain/formatPaidReport"); // ✅ ADD
-const { initPayment, confirmPayment } = require("./payments/mock");
+dotenv.config();
 
 const app = express();
+app.use(express.json());
 
-/* 🔥 GLOBAL ERROR HARDENING */
-process.on("uncaughtException", (err) => {
-  console.error("🔥 Uncaught Exception:", err.message);
+/* =========================
+   STATIC FRONTEND
+========================= */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-process.on("unhandledRejection", (reason) => {
-  console.error("🔥 Unhandled Rejection:", reason);
-});
+/* =========================
+   PAYPAL TOKEN
+========================= */
+async function getPayPalAccessToken() {
+  const auth = Buffer.from(
+    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+  ).toString("base64");
 
-app.use(bodyParser.json());
+  const res = await fetch(
+    `${process.env.PAYPAL_BASE_URL}/v1/oauth2/token`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: "grant_type=client_credentials"
+    }
+  );
 
-/* 🔒 STATIC FRONTEND */
-app.use(
-  express.static(
-    path.join(__dirname, "..", "frontend", "public")
-  )
-);
-
-/* 🔒 PORT */
-const PORT = process.env.PORT || 10000;
-
-/* 🔒 BASIC RATE LIMITING (IN-MEMORY) */
-const rateMap = new Map();
-const RATE_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT = 60;
-
-function isRateLimited(ip) {
-  const now = Date.now();
-
-  if (!rateMap.has(ip)) {
-    rateMap.set(ip, []);
-  }
-
-  const timestamps = rateMap
-    .get(ip)
-    .filter(ts => now - ts < RATE_WINDOW_MS);
-
-  timestamps.push(now);
-  rateMap.set(ip, timestamps);
-
-  return timestamps.length > RATE_LIMIT;
+  const data = await res.json();
+  return data.access_token;
 }
 
-/* ✅ FREE CHECK */
-app.post("/check", async (req, res) => {
-  const { identifier, identifier_type } = req.body || {};
-  const ip = req.ip || "unknown";
-
-  const safeFallbackReport = {
-    confidence: "MEDIUM",
-    risk_color: "Amber",
-    headline: "Some risk indicators were detected at the time of this check.",
-    indicators: []
-  };
-
-  if (isRateLimited(ip)) {
-    return res.json({ report: safeFallbackReport });
-  }
-
+/* =========================
+   CREATE PAYPAL ORDER
+========================= */
+app.post("/pay/create", async (req, res) => {
   try {
-    const result = await guardRun(
-      { identifier, identifier_type },
-      { paid: false }
+    const token = await getPayPalAccessToken();
+
+    const response = await fetch(
+      `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              amount: {
+                currency_code: "USD",
+                value: "1.49"
+              }
+            }
+          ],
+          application_context: {
+            return_url: "http://localhost:3000/?paid=1",
+            cancel_url: "http://localhost:3000/?cancel=1"
+          }
+        })
+      }
     );
 
-    res.set("X-JustCheck-Contract", "report:v1.0.0");
-
-    return res.json({ report: result });
+    const order = await response.json();
+    res.json(order);
 
   } catch (err) {
-    console.error("⚠️ SAFE FALLBACK:", err.message);
-    return res.json({ report: safeFallbackReport });
+    console.error("PAYPAL ERROR:", err);
+    res.status(500).json({ error: "PayPal failed" });
   }
 });
 
-/* 💳 PAYMENT INIT (MOCK) */
-app.post("/pay/init", (req, res) => {
-  try {
-    const { identifier, identifier_type } = req.body || {};
-
-    const payment = initPayment({
-      identifier,
-      identifier_type
-    });
-
-    return res.json(payment);
-
-  } catch (err) {
-    console.error("💥 PAYMENT INIT ERROR:", err.message);
-    return res.status(400).json({
-      error: "Unable to initiate payment"
-    });
-  }
-});
-
-/* 💳 PAYMENT CONFIRM — PAID REPORT */
-app.get("/pay/confirm", async (req, res) => {
-  try {
-    const { ref, identifier, identifier_type } = req.query;
-
-    const confirmation = confirmPayment(ref);
-
-    const freeStyleReport = await guardRun(
-      { identifier, identifier_type },
-      { paid: true }
-    );
-
-    // ✅ PAID EXPANSION HAPPENS HERE
-    const paidReport = formatPaidReport(freeStyleReport);
-
-    return res.json({
-      payment: confirmation,
-      report: paidReport
-    });
-
-  } catch (err) {
-    console.error("💥 PAYMENT CONFIRM ERROR:", err.message);
-    return res.status(400).json({
-      error: "Payment confirmation failed"
-    });
-  }
-});
-
-/* 🔒 CONTRACT ROUTES */
-app.get("/contract/report", (req, res) => {
-  res.sendFile(path.join(__dirname, "contract", "reportContract.json"));
-});
-
-app.get("/contract/report/v1", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "contract", "versions", "reportContract.v1.json")
-  );
-});
-
-/* 🔒 BOOT */
+/* =========================
+   SERVER
+========================= */
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`[BOOT] Server listening on port ${PORT}`);
+  console.log(`Backend running on port ${PORT}`);
 });
