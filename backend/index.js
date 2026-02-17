@@ -27,6 +27,27 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
+   PREVIEW CHECK (FREE)
+========================= */
+app.post("/check", (req, res) => {
+  const { identifier } = req.body;
+
+  if (!identifier) {
+    return res.status(400).json({
+      ok: false,
+      error: "MISSING_IDENTIFIER"
+    });
+  }
+
+  return res.json({
+    ok: true,
+    report: {
+      confidence: "Moderate"
+    }
+  });
+});
+
+/* =========================
    PAID CHECK ENDPOINT
 ========================= */
 app.post("/check/paid", async (req, res) => {
