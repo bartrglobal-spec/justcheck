@@ -127,10 +127,10 @@ button.secondary {
   display:inline-block;
   padding:6px 12px;
   border-radius:20px;
-  font-size:13px;
-  font-weight:600;
+  font-size:12px;
+  font-weight:700;
   color:#000;
-  margin-bottom:16px;
+  margin-right:8px;
 }
 
 .indicator.green { background:var(--green); }
@@ -147,7 +147,10 @@ button.secondary {
 
 .subtle-indicator.green { background:var(--green); }
 .subtle-indicator.amber { background:var(--amber); }
-.subtle-indicator.red { background:var(--red); }
+.subtle-indicator.red   { background:var(--red); }
+
+ul { padding-left:18px; }
+li { margin-bottom:10px; }
 
 .disclaimer {
   margin-top:26px;
@@ -175,6 +178,23 @@ function renderHeader(scanning=false) {
       <div class="logo-text">justcheckit</div>
       <div class="logo-line"></div>
     </div>
+  `;
+}
+
+function renderIndicators(indicators = []) {
+  if (!indicators.length) {
+    return `<p class="subtext">No notable public signals were detected for this check.</p>`;
+  }
+
+  return `
+    <ul>
+      ${indicators.map(i => `
+        <li>
+          <span class="indicator ${i.level}">${i.level.toUpperCase()}</span>
+          ${i.message}
+        </li>
+      `).join("")}
+    </ul>
   `;
 }
 
@@ -207,21 +227,19 @@ function render() {
   }
 
   if (step === 3) {
-    const level = (checkReport?.confidence || "Moderate").toLowerCase();
-    const colorClass =
-      level.includes("low") ? "green" :
-      level.includes("high") ? "red" : "amber";
+    const level = checkReport?.confidence?.level || "medium";
+    const color = level === "low" ? "green" : level === "high" ? "red" : "amber";
 
     app.innerHTML = `
       ${renderHeader()}
       <div class="main">
         <div class="headline">Some relevant information was found</div>
-        <div class="subtle-indicator ${colorClass}"></div>
+        <div class="subtle-indicator ${color}"></div>
 
         <div class="card">
-          The full report explains what was observed, what is unclear,
-          and how people typically think about this kind of result
-          before proceeding.
+          The full report explains what was observed, where gaps exist,
+          and how people typically think about this type of situation
+          before paying.
         </div>
 
         <button class="primary" onclick="startPayment()">
@@ -244,12 +262,20 @@ function render() {
     `;
   }
 
-  /* SCREEN 5 — PAID REPORT (UPDATED) */
-  if (step === 5 && checkReport) {
-    const level = (checkReport.confidence || "Moderate").toLowerCase();
-    const colorClass =
-      level.includes("low") ? "green" :
-      level.includes("high") ? "red" : "amber";
+  if (step === 5) {
+    if (!checkReport) {
+      app.innerHTML = `
+        ${renderHeader(true)}
+        <div class="main">
+          <div class="headline">Finalizing report…</div>
+          <div class="subtext">Almost there</div>
+        </div>
+      `;
+      return;
+    }
+
+    const level = checkReport.confidence.level;
+    const color = level === "low" ? "green" : level === "high" ? "red" : "amber";
 
     app.innerHTML = `
       ${renderHeader()}
@@ -257,8 +283,8 @@ function render() {
         <div class="headline">What this check shows</div>
 
         <div class="card">
-          <span class="indicator ${colorClass}">
-            Overall confidence: ${checkReport.confidence || "Moderate"}
+          <span class="indicator ${color}">
+            Overall confidence: ${level}
           </span>
 
           <p>
@@ -267,58 +293,22 @@ function render() {
             is made.
           </p>
 
-          <p>
-            This does not judge the person or business involved. It explains how much
-            information is available, and how clear or unclear that information is
-            right now.
-          </p>
-
-          <strong>What looked normal</strong>
-          <ul>
-            <li>Details that don’t stand out as unusual</li>
-            <li>No obvious contradictions in visible information</li>
-            <li>Patterns that appear generally consistent</li>
-          </ul>
+          <strong>Observed public signals</strong>
+          ${renderIndicators(checkReport.indicators)}
 
           <p>
-            These points add some reassurance, but they don’t tell the full story
-            on their own.
-          </p>
-
-          <strong>What was unclear or missing</strong>
-          <ul>
-            <li>Limited public information in certain areas</li>
-            <li>Gaps where more context would normally be expected</li>
-            <li>Not enough history or detail to be fully confident</li>
-          </ul>
-
-          <p>
-            This is common and does not mean something is wrong. It simply limits
-            certainty.
-          </p>
-
-          <strong>How people usually think about this result</strong>
-          <p>
-            When people run a check like this, they’re usually trying to avoid
-            surprises.
+            These signals describe what was observable at the time of the check.
+            They do not confirm intent, accuracy, or outcome.
           </p>
 
           <p>
-            In this case, there is some information to rely on, but not enough to
-            remove all uncertainty. That’s why this result sits in the middle —
-            neither clearly reassuring nor clearly concerning.
-          </p>
-
-          <p>
-            This report is meant to give you clarity about what is known and what
-            is not, before money changes hands.
+            This report explains what is known, what is unclear,
+            and why uncertainty may still exist before paying.
           </p>
         </div>
 
         <button class="primary" onclick="restart()">Run another check</button>
-        <button class="secondary" onclick="shareJustCheck()">
-          If you know someone this might help, please share
-        </button>
+        <button class="secondary" onclick="shareJustCheck()">If you know someone this might help, please share</button>
 
         <div class="disclaimer">
           Informational only. No advice, accusations, or conclusions.
@@ -328,7 +318,6 @@ function render() {
   }
 }
 
-/* ACTIONS (unchanged) */
 function runCheck() {
   identifier = document.getElementById("input").value.trim();
   if (!identifier) return;
@@ -343,15 +332,12 @@ function runCheck() {
   })
   .then(r => r.json())
   .then(d => checkReport = d.report)
-  .catch(() => {
-    checkReport = { confidence:"Moderate" };
-  });
+  .catch(() => checkReport = null);
 
   setTimeout(() => {
-    if (!checkReport) checkReport = { confidence:"Moderate" };
     step = 3;
     render();
-  }, 4800);
+  }, 4000);
 }
 
 async function startPayment() {
@@ -374,17 +360,19 @@ if (params.get("paid") === "1" && params.get("token")) {
 
   fetch(`/report?token=${paidToken}`)
     .then(r => r.json())
-    .then(d => checkReport = d)
+    .then(d => checkReport = d.report || d)
     .catch(() => {
-      checkReport = { confidence:"Moderate" };
+      checkReport = {
+        confidence:{ level:"medium", score:50 },
+        indicators:[]
+      };
     });
 
   setTimeout(() => {
-    if (!checkReport) checkReport = { confidence:"Moderate" };
     step = 5;
     render();
     window.history.replaceState({}, document.title, "/");
-  }, 2200);
+  }, 2000);
 }
 
 function restart() {
@@ -397,12 +385,8 @@ function restart() {
 function shareJustCheck() {
   const url = window.location.origin;
   navigator.share
-    ? navigator.share({
-        title:"JustCheck",
-        text:"If you know someone this might help, share this before they pay.",
-        url
-      })
-    : (navigator.clipboard.writeText(url), alert("JustCheck link copied"));
+    ? navigator.share({ title:"JustCheckIt", text:"Before you pay, check first.", url })
+    : (navigator.clipboard.writeText(url), alert("JustCheckIt link copied"));
 }
 
 render();
