@@ -1,34 +1,41 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /**
- * Indicator Loader
- * ----------------
- * Loads executable indicator modules.
- * No evaluation, no scoring, no filtering logic.
+ * loadIndicators
+ * --------------
+ * Loads indicator modules dynamically.
+ * Free tier excludes premium indicators.
  */
-
-const path = require("path");
-const fs = require("fs");
-
-function loadIndicators({ includePremium = false } = {}) {
-  const indicatorsDir = path.join(__dirname, "v1");
-
-  const files = fs
-    .readdirSync(indicatorsDir)
-    .filter(f => f.endsWith(".js") && !f.startsWith("_") && f !== "index.js");
-
+export async function loadIndicators({ includePremium = false } = {}) {
   const indicators = [];
 
+  const baseDir = path.join(__dirname, "v1");
+
+  if (!fs.existsSync(baseDir)) return indicators;
+
+  const files = fs
+    .readdirSync(baseDir)
+    .filter(f => f.endsWith(".js") && !f.startsWith("_"));
+
   for (const file of files) {
-    const mod = require(path.join(indicatorsDir, file));
+    try {
+      const fileUrl = pathToFileURL(path.join(baseDir, file)).href;
+      const mod = await import(fileUrl);
+      const indicator = mod.default || mod;
 
-    if (!mod || typeof mod.run !== "function") continue;
-    if (mod.premium === true && !includePremium) continue;
+      if (!indicator || typeof indicator.run !== "function") continue;
+      if (indicator.premium && !includePremium) continue;
 
-    indicators.push(mod);
+      indicators.push(indicator);
+    } catch {
+      // Indicator load failure must never break the brain
+    }
   }
 
   return indicators;
 }
-
-module.exports = {
-  loadIndicators
-};

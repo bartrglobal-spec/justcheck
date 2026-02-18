@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Brain imports
 import { guardInput } from "./brain/guard/index.js";
 import runPaidBrain from "./brain/runPaidBrain.js";
 import { formatPaidReport } from "./brain/formatPaidReport.js";
@@ -14,9 +13,6 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-/* =========================
-   STATIC FRONTEND
-========================= */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -26,65 +22,45 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* =========================
-   PREVIEW CHECK (FREE)
-========================= */
+/* FREE PREVIEW */
 app.post("/check", (req, res) => {
-  const { identifier } = req.body;
-
-  if (!identifier) {
-    return res.status(400).json({
-      ok: false,
-      error: "MISSING_IDENTIFIER"
-    });
-  }
-
-  return res.json({
+  res.json({
     ok: true,
     report: {
-      confidence: "Moderate"
+      confidence: { level: "medium", score: 50 }
     }
   });
 });
 
-/* =========================
-   PAID CHECK ENDPOINT
-========================= */
-app.post("/check/paid", async (req, res) => {
+/* PAID REPORT */
+app.get("/report", async (req, res) => {
   try {
-    const guard = guardInput(req.body);
+    const { token } = req.query;
 
-    if (!guard.allowed) {
-      return res.json({
-        ok: false,
-        reason: guard.reason
-      });
+    if (!token) {
+      return res.status(400).json({ error: "MISSING_TOKEN" });
     }
 
+    // ⚠️ Token validation comes later — for now we trust it
     const brainResult = await runPaidBrain({
-      identifier: guard.identifier,
-      identifier_type: guard.identifier_type
+      identifier: "paid_user",
+      identifier_type: "unknown"
     });
 
     const report = formatPaidReport(brainResult);
-
-    return res.json({
-      ok: true,
-      report
-    });
+    res.json(report);
 
   } catch (err) {
-    console.error("PAID CHECK ERROR:", err);
-    return res.status(500).json({
-      ok: false,
-      error: "INTERNAL_ERROR"
+    console.error("REPORT ERROR:", err);
+    res.status(500).json({
+      confidence: { level: "medium", score: 50 },
+      indicators: [],
+      system_notes: ["Fallback report used"]
     });
   }
 });
 
-/* =========================
-   PAYPAL ACCESS TOKEN
-========================= */
+/* PAYPAL TOKEN */
 async function getPayPalAccessToken() {
   const auth = Buffer.from(
     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
@@ -106,55 +82,36 @@ async function getPayPalAccessToken() {
   return data.access_token;
 }
 
-/* =========================
-   CREATE PAYPAL ORDER
-========================= */
+/* CREATE PAYPAL ORDER */
 app.post("/pay/create", async (req, res) => {
-  try {
-    const token = await getPayPalAccessToken();
+  const token = await getPayPalAccessToken();
+  const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
 
-    // IMPORTANT: dynamic base URL
-    const baseUrl =
-      process.env.APP_BASE_URL || "http://localhost:3000";
+  const response = await fetch(
+    `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          { amount: { currency_code: "USD", value: "1.49" } }
+        ],
+        application_context: {
+          return_url: `${baseUrl}/?paid=1&token=ok`,
+          cancel_url: `${baseUrl}/`
+        }
+      })
+    }
+  );
 
-    const response = await fetch(
-      `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          intent: "CAPTURE",
-          purchase_units: [
-            {
-              amount: {
-                currency_code: "USD",
-                value: "1.49"
-              }
-            }
-          ],
-          application_context: {
-            return_url: `${baseUrl}/?paid=1`,
-            cancel_url: `${baseUrl}/?cancel=1`
-          }
-        })
-      }
-    );
-
-    const order = await response.json();
-    res.json(order);
-
-  } catch (err) {
-    console.error("PAYPAL ERROR:", err);
-    res.status(500).json({ error: "PayPal failed" });
-  }
+  const order = await response.json();
+  res.json(order);
 });
 
-/* =========================
-   SERVER
-========================= */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
