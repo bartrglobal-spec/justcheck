@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JustCheckIt</title>
 
 <style>
@@ -12,6 +13,11 @@ margin:0;
 font-family: Arial, Helvetica, sans-serif;
 background:#0b0f1a;
 color:#ffffff;
+
+display:flex;
+align-items:center;
+justify-content:center;
+min-height:100vh;
 }
 
 .container{
@@ -19,7 +25,7 @@ width:100%;
 max-width:520px;
 margin:auto;
 text-align:center;
-padding:90px 20px;
+padding:40px 20px;
 }
 
 .logo{
@@ -198,6 +204,33 @@ margin-bottom:6px;
 
 .indicator{
 margin-bottom:6px;
+}
+
+/* MOBILE OPTIMIZATION */
+
+@media (max-width:600px){
+
+.container{
+max-width:100%;
+padding:30px 20px;
+}
+
+.logo{
+font-size:36px;
+}
+
+.tagline{
+font-size:20px;
+}
+
+.input{
+font-size:16px;
+}
+
+.button{
+font-size:18px;
+}
+
 }
 
 </style>
@@ -448,6 +481,8 @@ Run another check
 </div>
 
 <script>
+
+/* YOUR ORIGINAL SCRIPT — UNCHANGED */
 
 let identifier="";
 
