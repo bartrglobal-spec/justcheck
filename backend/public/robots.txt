@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://justcheckit.app/sitemap.xml

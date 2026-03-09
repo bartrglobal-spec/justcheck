@@ -1,395 +1,585 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>justcheckit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JustCheckIt</title>
 
 <style>
-:root {
-  --green:#4caf50;
-  --amber:#c97c14;
-  --red:#c0392b;
-  --bg:#0f1115;
-  --text:#eaeaea;
-  --muted:#a0a0a0;
-  --cta:#f5c400;
+
+body{
+margin:0;
+font-family: Arial, Helvetica, sans-serif;
+background:#0b0f1a;
+color:#ffffff;
 }
 
-* {
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+.container{
+width:100%;
+max-width:520px;
+margin:auto;
+text-align:center;
+padding:90px 20px;
 }
 
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
+.logo{
+font-size:44px;
+font-weight:700;
 }
 
-.container {
-  width:100%;
-  max-width:420px;
-  margin:0 auto;
-  padding:28px 20px 40px;
-  display:flex;
-  flex-direction:column;
+.logo-line{
+height:6px;
+width:160px;
+margin:14px auto 34px auto;
+border-radius:6px;
+background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
 }
 
-.header {
-  text-align:center;
-  margin-bottom:34px;
+.tagline{
+font-size:22px;
+margin-bottom:10px;
 }
 
-.logo-text {
-  font-size:38px;
-  font-weight:700;
+.subtext{
+color:#a0a8b8;
+font-size:14px;
+line-height:1.5;
+margin-bottom:34px;
 }
 
-.logo-line {
-  margin:6px auto 0;
-  height:4px;
-  width:160px;
-  background:linear-gradient(to right,var(--green),var(--amber),var(--red));
-  border-radius:2px;
-  overflow:hidden;
+.input{
+width:100%;
+padding:18px;
+border-radius:8px;
+border:none;
+font-size:16px;
+margin-bottom:14px;
+box-sizing:border-box;
 }
 
-.scanning .logo-line::before {
-  content:"";
-  display:block;
-  height:100%;
-  width:35%;
-  background:inherit;
-  animation:scan 2.6s linear infinite;
+.button{
+width:100%;
+background:#f4c400;
+color:#000;
+padding:18px;
+border:none;
+border-radius:8px;
+font-size:19px;
+font-weight:700;
+cursor:pointer;
 }
 
-@keyframes scan {
-  from { transform:translateX(-120%); }
-  to   { transform:translateX(260%); }
+.button:hover{
+background:#ffd84d;
 }
 
-.main {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  text-align:center;
+.payButton{
+animation:pulse 1.6s infinite;
 }
 
-.headline {
-  font-size:18px;
-  margin-bottom:20px;
+@keyframes pulse{
+0%{box-shadow:0 0 0 0 rgba(0,0,0,.15);}
+70%{box-shadow:0 0 0 10px rgba(0,0,0,0);}
+100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}
 }
 
-.subtext {
-  font-size:14px;
-  color:var(--muted);
-  margin-top:10px;
+.note{
+margin-top:18px;
+font-size:13px;
+color:#8a93a5;
 }
 
-.action-group {
-  margin-top:12px;
+.disclaimer{
+margin-top:38px;
+font-size:12px;
+color:#6f7788;
 }
 
-input, button {
-  width:100%;
-  padding:14px;
-  font-size:16px;
-  margin-top:18px;
-  border-radius:6px;
-  border:none;
+.screen{display:none;}
+.screen.active{display:block;}
+
+.scan-list{
+text-align:left;
+margin-top:28px;
+margin-bottom:30px;
 }
 
-button.primary {
-  background:var(--cta);
-  font-weight:600;
-  cursor:pointer;
+.scan-item{
+margin-bottom:14px;
+font-size:16px;
+opacity:0;
+transform:translateY(6px);
+transition:all .35s ease;
 }
 
-button.secondary {
-  background:transparent;
-  border:1px solid #2c2f36;
-  color:var(--text);
-  cursor:pointer;
+.scan-item.visible{
+opacity:1;
+transform:translateY(0);
 }
 
-.card {
-  margin-top:22px;
-  padding:18px;
-  background:#161922;
-  border-radius:10px;
-  text-align:left;
+.progress{
+width:100%;
+height:10px;
+border-radius:6px;
+overflow:hidden;
+margin-top:30px;
+background:#111;
 }
 
-.indicator {
-  display:inline-block;
-  padding:6px 12px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:700;
-  color:#000;
-  margin-right:8px;
+.progress-bar{
+width:0%;
+height:100%;
+background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
+animation:scanProgress 4s linear forwards;
 }
 
-.indicator.green { background:var(--green); }
-.indicator.amber { background:var(--amber); }
-.indicator.red   { background:var(--red); }
-
-.subtle-indicator {
-  display:inline-block;
-  width:44px;
-  height:6px;
-  border-radius:4px;
-  margin:14px auto 0;
+@keyframes scanProgress{
+from{width:0%;}
+to{width:100%;}
 }
 
-.subtle-indicator.green { background:var(--green); }
-.subtle-indicator.amber { background:var(--amber); }
-.subtle-indicator.red   { background:var(--red); }
-
-ul { padding-left:18px; }
-li { margin-bottom:10px; }
-
-.disclaimer {
-  margin-top:26px;
-  font-size:12px;
-  color:#7d7d7d;
-  text-align:center;
+.preview{
+text-align:left;
+background:#111827;
+padding:22px;
+border-radius:10px;
+margin-top:26px;
 }
+
+.preview-item{
+margin-bottom:24px;
+opacity:0;
+transition:opacity .4s ease;
+}
+
+.preview-item.visible{
+opacity:1;
+}
+
+.preview-title{
+font-size:15px;
+margin-bottom:10px;
+color:#cfd6e6;
+}
+
+.preview-bar{
+height:12px;
+border-radius:6px;
+background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
+width:0%;
+transition:width .8s ease;
+}
+
+.preview-bar.blur{
+filter:blur(2px);
+opacity:0.9;
+}
+
+.scan-preview{
+text-align:left;
+color:#cfd6e6;
+font-size:14px;
+line-height:1.8;
+margin-bottom:20px;
+}
+
+.report-block{
+text-align:left;
+margin-top:24px;
+font-size:14px;
+line-height:1.6;
+color:#cfd6e6;
+}
+
+.report-title{
+font-weight:700;
+margin-bottom:6px;
+}
+
+.indicator{
+margin-bottom:6px;
+}
+
 </style>
+
 </head>
 
 <body>
-<div class="container" id="app"></div>
+
+<div class="container">
+
+<!-- SCREEN 1 -->
+
+<div id="screen1" class="screen active">
+
+<div class="logo">
+justcheckit
+<div class="logo-line"></div>
+</div>
+
+<div class="tagline">
+Check before you send money
+</div>
+
+<div class="subtext">
+Paste a name, phone number, email, or payment reference.<br><br>
+We review publicly visible information people often miss before sending a payment.
+</div>
+
+<input class="input" id="identifier"
+placeholder="Name, phone number, email, or payment reference"/>
+
+<button class="button" onclick="startCheck()">
+Check now
+</button>
+
+<div class="note">
+No signup • No Google login • No subscriptions
+</div>
+
+<div class="disclaimer">
+Informational context only. Not advice or conclusions.
+</div>
+
+</div>
+
+<!-- SCREEN 2 -->
+
+<div id="screen2" class="screen">
+<div class="logo">justcheckit<div class="logo-line"></div></div>
+<div class="tagline">Checking before you send money</div>
+<div class="subtext">Reviewing publicly available information</div>
+
+<div class="scan-list">
+<div class="scan-item" id="scan1">✓ Checking web presence</div>
+<div class="scan-item" id="scan2">✓ Searching public discussions</div>
+<div class="scan-item" id="scan3">✓ Reviewing business records</div>
+<div class="scan-item" id="scan4">✓ Looking for risk indicators</div>
+</div>
+
+<div class="progress"><div class="progress-bar"></div></div>
+
+<div class="note">
+This usually takes a few seconds
+</div>
+</div>
+
+<!-- SCREEN 3 -->
+
+<div id="screen3" class="screen">
+
+<div class="logo">justcheckit<div class="logo-line"></div></div>
+
+<div class="tagline">
+We found information that could matter before you send money.
+</div>
+
+<div class="subtext">
+People usually check before sending a payment.
+</div>
+
+<div class="subtext" id="checkedIdentifier"></div>
+
+<div id="previewScan" class="scan-preview">
+Scanning public discussions…<br>
+Checking contact traces…<br>
+Cross-referencing identity signals…
+</div>
+
+<div class="preview">
+
+<div class="preview-item" id="p1">
+<div class="preview-title">Mentions in public discussions</div>
+<div class="preview-bar" id="bar1"></div>
+</div>
+
+<div class="preview-item" id="p2">
+<div class="preview-title">Contact details across sources</div>
+<div class="preview-bar" id="bar2"></div>
+</div>
+
+<div class="preview-item" id="p3">
+<div class="preview-title">Identity consistency review</div>
+<div class="preview-bar" id="bar3"></div>
+</div>
+
+</div>
+
+<button class="button payButton" onclick="startPayment()">
+See the full report — $1.49
+</button>
+
+<div class="note">
+Charged in your local currency<br>
+No signup • No lock-in
+</div>
+
+<div class="disclaimer">
+Informational context only. Not advice or conclusions.
+</div>
+
+</div>
+
+<!-- SCREEN 4 -->
+
+<div id="screen4" class="screen">
+<div class="logo">justcheckit<div class="logo-line"></div></div>
+<div class="tagline">Verifying payment…</div>
+<div class="subtext">Preparing your report</div>
+</div>
+
+<!-- SCREEN 5 -->
+
+<div id="screen5" class="screen">
+
+<div class="logo">justcheckit<div class="logo-line"></div></div>
+
+<div class="tagline">Running deeper analysis</div>
+<div class="subtext">Cross-checking multiple public sources</div>
+
+<div class="scan-list">
+<div class="scan-item" id="r1">✓ Reviewing identity traces</div>
+<div class="scan-item" id="r2">✓ Cross-checking contact signals</div>
+<div class="scan-item" id="r3">✓ Checking discussion patterns</div>
+<div class="scan-item" id="r4">✓ Compiling report</div>
+</div>
+
+<div class="progress"><div class="progress-bar"></div></div>
+
+</div>
+
+<!-- SCREEN 6 -->
+
+<div id="screen6" class="screen">
+
+<div class="logo">justcheckit<div class="logo-line"></div></div>
+
+<div class="tagline">Your JustCheckIt Report</div>
+
+<div class="subtext" id="summaryText"></div>
+
+<div class="preview">
+
+<div class="preview-title">Observed signals</div>
+
+<div class="preview-item visible">
+<div class="preview-title">Mentions in public discussions</div>
+<div class="preview-bar" id="final1"></div>
+<div class="indicator">
+This phone number, email, or name appears in public discussions online.
+</div>
+</div>
+
+<div class="preview-item visible">
+<div class="preview-title">Contact details across sources</div>
+<div class="preview-bar" id="final2"></div>
+<div class="indicator">
+This contact detail appears on multiple public web pages.
+</div>
+</div>
+
+<div class="preview-item visible">
+<div class="preview-title">Identity consistency review</div>
+<div class="preview-bar" id="final3"></div>
+<div class="indicator">
+We reviewed how this contact appears across different websites.
+</div>
+</div>
+
+</div>
+
+<div class="report-block">
+<div class="report-title">Explanation</div>
+<div id="explanationText"></div>
+</div>
+
+<div class="report-block">
+<div class="report-title">Indicators</div>
+<div id="indicatorList"></div>
+</div>
+
+<div class="report-block">
+<div class="report-title">What this means</div>
+
+This phone number, email, or name appears in several public places online.<br><br>
+
+This does not mean the person is a scammer. However, when a contact appears in many public discussions or listings, it can sometimes be linked to online transactions.<br><br>
+
+If someone you do not know asks for money using this contact, it may be safer to verify their identity before sending payment.
+
+</div>
+
+<div class="report-block">
+<div class="report-title">What you can do next</div>
+
+• Ask the person requesting payment for additional verification before sending money<br>
+• Request a short phone or video call to confirm their identity<br>
+• Be cautious of urgent requests or pressure to send money quickly<br>
+• Consider using payment methods that offer buyer protection
+
+</div>
+
+<div class="report-block">
+<div class="report-title">Quick payment safety checklist</div>
+
+Before sending money, consider:<br><br>
+
+☐ Have you spoken to the person directly?<br>
+☐ Does the payment request feel rushed or urgent?<br>
+☐ Are you being asked to send money to a new or different account?<br>
+☐ Are you being asked to avoid normal payment protections?<br><br>
+
+If several of these apply, it may be safer to pause and verify before sending funds.
+
+</div>
+
+<button class="button" onclick="shareCheck()">
+Know someone about to send money? Ask them to check first.
+</button>
+
+<button class="button" onclick="restart()" style="margin-top:14px;">
+Run another check
+</button>
+
+<div class="disclaimer" id="disclaimerText"></div>
+
+</div>
+
+</div>
 
 <script>
-let step = 1;
-let identifier = "";
-let checkReport = null;
-let paidToken = null;
 
-const app = document.getElementById("app");
+let identifier="";
 
-function renderHeader(scanning=false) {
-  return `
-    <div class="header ${scanning ? "scanning" : ""}">
-      <div class="logo-text">justcheckit</div>
-      <div class="logo-line"></div>
-    </div>
-  `;
+function hideAllScreens(){
+document.querySelectorAll(".screen").forEach(s=>{
+s.classList.remove("active");
+});
 }
 
-function renderIndicators(indicators = []) {
-  if (!indicators.length) {
-    return `<p class="subtext">No notable public signals were detected for this check.</p>`;
-  }
+function startCheck(){
 
-  return `
-    <ul>
-      ${indicators.map(i => `
-        <li>
-          <span class="indicator ${i.level}">${i.level.toUpperCase()}</span>
-          ${i.message}
-        </li>
-      `).join("")}
-    </ul>
-  `;
+identifier=document.getElementById("identifier").value;
+
+if(!identifier){
+alert("Please enter something to check");
+return;
 }
 
-function render() {
-  app.className = "container";
-  if (step === 2 || step === 4) app.classList.add("scanning");
+hideAllScreens();
+document.getElementById("screen2").classList.add("active");
 
-  if (step === 1) {
-    app.innerHTML = `
-      ${renderHeader()}
-      <div class="main">
-        <div class="headline">Before you pay — check first</div>
-        <div class="action-group">
-          <input id="input" placeholder="Name, phone number, email, or reference">
-          <button class="primary" onclick="runCheck()">Check now</button>
-        </div>
-        <div class="disclaimer">Informational only. No advice or conclusions.</div>
-      </div>
-    `;
-  }
+setTimeout(()=>{
+hideAllScreens();
+document.getElementById("screen3").classList.add("active");
+document.getElementById("checkedIdentifier").innerText=
+"Public information found for: "+identifier;
+runPreview();
+},4200);
 
-  if (step === 2) {
-    app.innerHTML = `
-      ${renderHeader(true)}
-      <div class="main">
-        <div class="headline">Reviewing available context…</div>
-        <div class="subtext">This usually takes a few seconds</div>
-      </div>
-    `;
-  }
-
-  if (step === 3) {
-    const level = checkReport?.confidence?.level || "medium";
-    const color = level === "low" ? "green" : level === "high" ? "red" : "amber";
-
-    app.innerHTML = `
-      ${renderHeader()}
-      <div class="main">
-        <div class="headline">Some relevant information was found</div>
-        <div class="subtle-indicator ${color}"></div>
-
-        <div class="card">
-          The full report explains what was observed, where gaps exist,
-          and how people typically think about this type of situation
-          before paying.
-        </div>
-
-        <button class="primary" onclick="startPayment()">
-          Unlock full report — $1.49
-        </button>
-
-        <div class="subtext">(charged in your local currency)</div>
-        <div class="disclaimer">Informational only. No advice or conclusions.</div>
-      </div>
-    `;
-  }
-
-  if (step === 4) {
-    app.innerHTML = `
-      ${renderHeader(true)}
-      <div class="main">
-        <div class="headline">Verifying payment…</div>
-        <div class="subtext">Preparing your report</div>
-      </div>
-    `;
-  }
-
-  if (step === 5) {
-    if (!checkReport) {
-      app.innerHTML = `
-        ${renderHeader(true)}
-        <div class="main">
-          <div class="headline">Finalizing report…</div>
-          <div class="subtext">Almost there</div>
-        </div>
-      `;
-      return;
-    }
-
-    const level = checkReport.confidence.level;
-    const color = level === "low" ? "green" : level === "high" ? "red" : "amber";
-
-    app.innerHTML = `
-      ${renderHeader()}
-      <div class="main">
-        <div class="headline">What this check shows</div>
-
-        <div class="card">
-          <span class="indicator ${color}">
-            Overall confidence: ${level}
-          </span>
-
-          <p>
-            We looked at what is publicly visible around the information you entered
-            and compared it with how similar situations usually look before a payment
-            is made.
-          </p>
-
-          <strong>Observed public signals</strong>
-          ${renderIndicators(checkReport.indicators)}
-
-          <p>
-            These signals describe what was observable at the time of the check.
-            They do not confirm intent, accuracy, or outcome.
-          </p>
-
-          <p>
-            This report explains what is known, what is unclear,
-            and why uncertainty may still exist before paying.
-          </p>
-        </div>
-
-        <button class="primary" onclick="restart()">Run another check</button>
-        <button class="secondary" onclick="shareJustCheck()">If you know someone this might help, please share</button>
-
-        <div class="disclaimer">
-          Informational only. No advice, accusations, or conclusions.
-        </div>
-      </div>
-    `;
-  }
 }
 
-function runCheck() {
-  identifier = document.getElementById("input").value.trim();
-  if (!identifier) return;
-
-  step = 2;
-  render();
-
-  fetch("/check", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ identifier })
-  })
-  .then(r => r.json())
-  .then(d => checkReport = d.report)
-  .catch(() => checkReport = null);
-
-  setTimeout(() => {
-    step = 3;
-    render();
-  }, 4000);
+function randomRange(min,max){
+return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-async function startPayment() {
-  const res = await fetch("/pay/create", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ identifier })
-  });
+function runPreview(){
 
-  const data = await res.json();
-  const approve = data.links.find(l => l.rel === "approve");
-  window.location.href = approve.href;
+const v1=randomRange(20,85);
+const v2=randomRange(35,90);
+const v3=randomRange(15,70);
+
+setTimeout(()=>{
+document.getElementById("previewScan").style.display="none";
+document.getElementById("p1").classList.add("visible");
+document.getElementById("bar1").style.width=v1+"%";
+document.getElementById("p2").classList.add("visible");
+document.getElementById("bar2").style.width=v2+"%";
+document.getElementById("p3").classList.add("visible");
+document.getElementById("bar3").style.width=v3+"%";
+},2400);
+
 }
 
-const params = new URLSearchParams(window.location.search);
-if (params.get("paid") === "1" && params.get("token")) {
-  paidToken = params.get("token");
-  step = 4;
-  render();
+async function startPayment(){
 
-  fetch(`/report?token=${paidToken}`)
-    .then(r => r.json())
-    .then(d => checkReport = d.report || d)
-    .catch(() => {
-      checkReport = {
-        confidence:{ level:"medium", score:50 },
-        indicators:[]
-      };
-    });
+const res=await fetch("/pay/create",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({identifier})
+});
 
-  setTimeout(() => {
-    step = 5;
-    render();
-    window.history.replaceState({}, document.title, "/");
-  }, 2000);
+const data=await res.json();
+const approve=data.links.find(l=>l.rel==="approve");
+window.location.href=approve.href;
+
 }
 
-function restart() {
-  step = 1;
-  identifier = "";
-  checkReport = null;
-  render();
+const params=new URLSearchParams(window.location.search);
+
+if(params.get("paid")==="1" && params.get("token")){
+identifier=params.get("identifier");
+hideAllScreens();
+document.getElementById("screen4").classList.add("active");
+setTimeout(runReport,2000);
 }
 
-function shareJustCheck() {
-  const url = window.location.origin;
-  navigator.share
-    ? navigator.share({ title:"JustCheckIt", text:"Before you pay, check first.", url })
-    : (navigator.clipboard.writeText(url), alert("JustCheckIt link copied"));
+async function runReport(){
+
+hideAllScreens();
+document.getElementById("screen5").classList.add("active");
+
+const res=await fetch("/report?identifier="+identifier);
+const data=await res.json();
+
+setTimeout(()=>{
+
+hideAllScreens();
+document.getElementById("screen6").classList.add("active");
+
+document.getElementById("final1").style.width=data.public_mentions+"%";
+document.getElementById("final2").style.width=data.contact_signals+"%";
+document.getElementById("final3").style.width=data.identity_score+"%";
+
+document.getElementById("summaryText").innerText=data.summary;
+document.getElementById("explanationText").innerText=data.explanation;
+
+let html="";
+data.indicators.forEach(i=>{
+if(i.message){
+html+="<div class='indicator'>• "+i.message+"</div>";
+}
+});
+
+document.getElementById("indicatorList").innerHTML=html;
+document.getElementById("disclaimerText").innerText=data.disclaimer;
+
+},3500);
+
 }
 
-render();
+function shareCheck(){
+
+const url=window.location.origin;
+
+if(navigator.share){
+navigator.share({
+title:"JustCheckIt",
+text:"Know someone about to send money? Ask them to check first.",
+url:url
+});
+}else{
+navigator.clipboard.writeText(url);
+alert("Link copied. Share it with someone who might need it.");
+}
+
+}
+
+function restart(){
+location.href="/";
+}
+
 </script>
+
 </body>
 </html>

@@ -1,24 +1,27 @@
+/**
+ * runBrain (Unified v2)
+ * ---------------------
+ * Enrichment-first architecture.
+ * Single source of truth for risk level.
+ */
+
 import { guardInput } from "./guard/index.js";
 import attachIndicators from "./attachIndicators.js";
 import buildConfidence from "./confidence.js";
 import explain from "./explain.js";
 import { getPublicSignals } from "./signal/signalEngine.js";
+import fetchExternalSignals from "./externalSignals.js";
+import sanitizeReport from "./sanitizeReport.js";
 
-/**
- * runBrain
- * --------
- * Core brain execution (free tier).
- * Separates:
- * - signal confidence (certainty)
- * - user-facing risk posture (interpretation)
- *
- * NEVER asserts wrongdoing.
- */
 export default async function runBrain(input = {}) {
+
+  console.log("RUN BRAIN EXECUTED");
+
   // -----------------------------------
-  // Guard input
+  // Guard
   // -----------------------------------
   const guard = guardInput(input);
+  console.log("Guard result:", guard);
 
   if (!guard.allowed) {
     return {
@@ -27,80 +30,78 @@ export default async function runBrain(input = {}) {
     };
   }
 
-  // -----------------------------------
-  // Base brain object
-  // -----------------------------------
   const brain = {
     identifier: guard.identifier,
     identifier_type: guard.identifier_type,
     indicators: [],
     publicSignals: {},
+
+    // Correct schema matching enrichment engine
+    externalSignalSummary: {
+      has_web_presence: false,
+      discussion_mentions_count: 0,
+      warning_mentions_count: 0
+    },
+
     system_notes: []
   };
 
   // -----------------------------------
-  // Load persistent public signals
+  // Persistent signals
   // -----------------------------------
   brain.publicSignals = getPublicSignals(brain.identifier);
 
-  brain.system_notes.push(
-    "No external enrichment sources connected yet",
-    "Public signal structure initialized"
+  // -----------------------------------
+  // External signals
+  // -----------------------------------
+  console.log("About to call fetchExternalSignals");
+
+  brain.externalSignalSummary = await fetchExternalSignals(
+    brain.identifier,
+    brain.identifier_type
   );
 
+  console.log("ENRICHMENT RESULT:", brain.externalSignalSummary);
+
   // -----------------------------------
-  // Attach indicators
+  // Indicators
   // -----------------------------------
   brain.indicators = await attachIndicators(brain);
 
   // -----------------------------------
-  // Build confidence (certainty)
+  // Risk Engine (Single Source of Truth)
   // -----------------------------------
   brain.confidence = buildConfidence(
     brain.indicators,
     brain.publicSignals,
-    brain.identifier_type
+    brain.identifier_type,
+    brain.externalSignalSummary
   );
 
   // -----------------------------------
-  // Risk summary (user-facing meaning)
+  // Risk Color (UI Layer)
   // -----------------------------------
-  const hasWarningSignals =
-    brain.indicators.some(i => i.level === "red") ||
-    brain.publicSignals.warning_mentions_count > 0;
-
-  let risk_summary = {
-    level: "neutral",
-    message:
-      "No strong positive or negative risk signals are currently visible. This result should be considered informational only."
-  };
-
-  if (hasWarningSignals) {
-    risk_summary = {
-      level: "caution",
-      message:
-        "Some public signals suggest increased risk or caution may be appropriate. This does not confirm wrongdoing, but it may be sensible to verify details carefully before proceeding."
-    };
-  }
-
-  if (
-    !hasWarningSignals &&
-    brain.confidence.level === "high" &&
-    brain.publicSignals.has_web_presence
-  ) {
-    risk_summary = {
-      level: "stable",
-      message:
-        "Public information for this identifier appears relatively stable and consistent. No cautionary signals were observed at this time."
-    };
-  }
-
-  brain.risk_summary = risk_summary;
+  brain.risk_color = brain.confidence.riskLevel;
 
   // -----------------------------------
-  // Human explanation (narrative)
+  // Headline
+  // -----------------------------------
+  brain.headline =
+    brain.indicators.length === 0
+      ? "No significant risk indicators detected"
+      : "Potential risk indicators detected";
+
+  // -----------------------------------
+  // Explanation
   // -----------------------------------
   brain.explanation = explain(brain);
 
-  return brain;
+  // -----------------------------------
+  // Metadata
+  // -----------------------------------
+  brain.meta = {
+    generated_at: new Date().toISOString()
+  };
+
+  return sanitizeReport(brain);
 }

@@ -16,11 +16,16 @@ export async function loadIndicators({ includePremium = false } = {}) {
 
   const baseDir = path.join(__dirname, "v1");
 
-  if (!fs.existsSync(baseDir)) return indicators;
+  if (!fs.existsSync(baseDir)) {
+    console.log("Indicators directory not found:", baseDir);
+    return indicators;
+  }
 
   const files = fs
     .readdirSync(baseDir)
     .filter(f => f.endsWith(".js") && !f.startsWith("_"));
+
+  console.log("Indicator files found:", files);
 
   for (const file of files) {
     try {
@@ -32,8 +37,8 @@ export async function loadIndicators({ includePremium = false } = {}) {
       if (indicator.premium && !includePremium) continue;
 
       indicators.push(indicator);
-    } catch {
-      // Indicator load failure must never break the brain
+    } catch (err) {
+      console.error("Failed loading indicator:", file, err);
     }
   }
 

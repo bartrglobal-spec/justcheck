@@ -5,7 +5,7 @@
  * Ensures shape stability and removes internal-only data.
  */
 
-function sanitizeReport(report) {
+export default function sanitizeReport(report) {
   return {
     identifier: report.identifier,
     identifier_type: report.identifier_type,
@@ -25,9 +25,8 @@ function sanitizeReport(report) {
     meta: {
       total_checks: report.meta?.total_checks ?? 0,
       first_seen: report.meta?.first_seen ?? null,
-      generated_at: report.meta?.generated_at ?? new Date().toISOString()
+      generated_at:
+        report.meta?.generated_at ?? new Date().toISOString()
     }
   };
 }
-
-module.exports = sanitizeReport;

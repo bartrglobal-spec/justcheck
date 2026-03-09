@@ -1,51 +1,69 @@
-export function formatPaidReport(brainResult = {}) {
+export default function formatPaidReport(brainResult = {}) {
+
   const {
-    confidence,
+    confidence = {},
     indicators = [],
     explanation = "",
     identifier,
     identifier_type
   } = brainResult;
 
-  // Defensive defaults
-  const level = confidence?.level || "unknown";
-  const score = confidence?.score ?? null;
+  const level = confidence?.riskLevel || "amber";
+  const score = confidence?.riskScore ?? 50;
 
   let summary;
 
-  if (level === "low") {
+  if (level === "green") {
     summary =
-      "There is a healthy amount of publicly observable information connected to this identifier. Nothing immediately stands out as unusual, but this is not a guarantee of safety.";
-  } else if (level === "medium") {
-    summary =
-      "There is a mix of available information and uncertainty connected to this identifier. Some information is present, but it is not fully clear.";
-  } else if (level === "high") {
-    summary =
-      "Very little reliable public information could be found for this identifier. This does not mean something is wrong, but it does mean extra caution may be appropriate.";
-  } else {
-    summary =
-      "There is not enough information available to confidently describe this identifier.";
+      "A healthy amount of publicly observable information appears to be connected to this identifier. Nothing immediately stands out as unusual, but this is not a guarantee of safety.";
   }
 
+  else if (level === "amber") {
+    summary =
+      "A mix of available information and uncertainty appears to be connected to this identifier. Some signals are present, but the overall picture remains unclear.";
+  }
+
+  else if (level === "red") {
+    summary =
+      "Multiple public signals referencing this identifier were observed across publicly available sources. Some patterns may warrant additional caution before sending money.";
+  }
+
+  else {
+    summary =
+      "There is not enough publicly observable information available to confidently describe this identifier.";
+  }
+
+  const publicMentions = score;
+  const contactSignals = Math.max(15, Math.min(100, score * 0.9));
+  const identityScore = Math.max(15, Math.min(100, score * 0.75));
+
   return {
+
     identifier,
     identifier_type,
 
     confidence: {
-      level,
-      score
+      riskLevel: level,
+      riskScore: score
     },
 
     summary,
 
     explanation,
 
-    indicators: indicators.map(i => ({
-      label: i.label,
-      description: i.description
-    })),
+    indicators: indicators
+      .filter(i => i && i.message)
+      .map(i => ({
+        level: i.level,
+        message: i.message
+      })),
+
+    public_mentions: publicMentions,
+    contact_signals: contactSignals,
+    identity_score: identityScore,
 
     disclaimer:
       "This report provides informational context only. It is not a recommendation, judgment, or guarantee. Always use your own judgment before sending money."
+
   };
 }

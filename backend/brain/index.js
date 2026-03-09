@@ -5,11 +5,14 @@
  * and sanitization into a stable public report.
  */
 
-const sanitizeReport = require("./sanitizeReport");
-const { loadIndicators } = require("./indicators/loader");
+import { loadIndicators } from "./indicators/loader.js";
+import sanitizeReport from "./sanitizeReport.js";
 
-async function runBrain(input) {
-  const indicators = loadIndicators({ includePremium: false });
+export async function runBrain(input) {
+  // 🔥 FIX: Await indicator loading
+  const indicators = await loadIndicators({ includePremium: false });
+
+  console.log("Loaded indicators:", indicators.length);
 
   const results = [];
 
@@ -28,7 +31,7 @@ async function runBrain(input) {
         });
       }
     } catch (err) {
-      // Silent fail — indicators must never break the brain
+      console.error("Indicator error:", indicator.id, err);
     }
   }
 
@@ -39,10 +42,10 @@ async function runBrain(input) {
 
   if (riskLevels.includes("red")) {
     risk_color = "red";
-    confidence = "high";
+    confidence = "strong"; // 🔥 changed wording (not "high")
   } else if (riskLevels.includes("amber")) {
     risk_color = "amber";
-    confidence = "medium";
+    confidence = "moderate";
   }
 
   const headline =
@@ -70,7 +73,3 @@ async function runBrain(input) {
 
   return sanitizeReport(report);
 }
-
-module.exports = {
-  runBrain
-};

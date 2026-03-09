@@ -10,5 +10,59 @@
       "User reports warning about payment requests",
       "Phone number listed in online discussion thread"
     ]
+  },
+  "447447025920": {
+    "first_seen_at": "2026-03-03T07:21:00.794Z",
+    "last_checked_at": "2026-03-09T08:24:26.594Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
+  },
+  "0647470911": {
+    "first_seen_at": "2026-03-03T08:12:11.010Z",
+    "last_checked_at": "2026-03-08T14:39:12.260Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
+  },
+  "bartrglobal@gmail.com": {
+    "first_seen_at": "2026-03-03T08:13:29.114Z",
+    "last_checked_at": "2026-03-03T08:28:22.287Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
+  },
+  "demo@example.com": {
+    "first_seen_at": "2026-03-07T09:51:49.643Z",
+    "last_checked_at": "2026-03-07T09:52:49.955Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
+  },
+  "schlebuschhennie2@gmail.com": {
+    "first_seen_at": "2026-03-07T10:20:58.858Z",
+    "last_checked_at": "2026-03-09T07:41:59.299Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
+  },
+  "yomoco": {
+    "first_seen_at": "2026-03-09T07:57:40.422Z",
+    "last_checked_at": "2026-03-09T07:57:40.422Z",
+    "has_web_presence": false,
+    "has_business_profile": false,
+    "warning_mentions_count": 0,
+    "discussion_mentions_count": 0,
+    "web_titles": []
   }
 }

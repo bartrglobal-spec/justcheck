@@ -5,31 +5,35 @@
 
 const payments = new Map();
 
-module.exports = {
-  create({ check_id }) {
-    const reference =
-      "mock_" +
-      Date.now() +
-      "_" +
-      Math.random().toString(36).slice(2);
+function create({ check_id }) {
+  const reference =
+    "mock_" +
+    Date.now() +
+    "_" +
+    Math.random().toString(36).slice(2);
 
-    payments.set(reference, {
-      check_id,
-      status: "pending"
-    });
+  payments.set(reference, {
+    check_id,
+    status: "pending"
+  });
 
-    return reference;
-  },
+  return reference;
+}
 
-  markPaid(reference) {
-    const p = payments.get(reference);
-    if (!p) return false;
+function markPaid(reference) {
+  const p = payments.get(reference);
+  if (!p) return false;
 
-    p.status = "paid";
-    return p;
-  },
+  p.status = "paid";
+  return p;
+}
 
-  get(reference) {
-    return payments.get(reference);
-  }
+function get(reference) {
+  return payments.get(reference);
+}
+
+export default {
+  create,
+  markPaid,
+  get
 };

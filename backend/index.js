@@ -1,118 +1,131 @@
 import express from "express";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import FirecrawlApp from "firecrawl";
 
-import { guardInput } from "./brain/guard/index.js";
+import runBrain from "./brain/runBrain.js";
 import runPaidBrain from "./brain/runPaidBrain.js";
-import { formatPaidReport } from "./brain/formatPaidReport.js";
+import formatPaidReport from "./brain/formatPaidReport.js";
+import payRoutes from "./routes/pay.js";
 
 dotenv.config();
 
-const app = express();
-app.use(express.json());
+console.log("Firecrawl key loaded:", process.env.FIRECRAWL_API_KEY ? "YES" : "NO");
+
+const firecrawl = new FirecrawlApp({
+  apiKey: process.env.FIRECRAWL_API_KEY
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+
+/**
+ * SERVE FRONTEND
+ */
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+/**
+ * PAYMENT ROUTES
+ */
+app.use("/pay", payRoutes);
 
-/* FREE PREVIEW */
-app.post("/check", (req, res) => {
-  res.json({
-    ok: true,
-    report: {
-      confidence: { level: "medium", score: 50 }
-    }
-  });
-});
-
-/* PAID REPORT */
-app.get("/report", async (req, res) => {
+/**
+ * PREVIEW CHECK
+ */
+app.post("/check", async (req, res) => {
   try {
-    const { token } = req.query;
 
-    if (!token) {
-      return res.status(400).json({ error: "MISSING_TOKEN" });
+    const { identifier, identifier_type } = req.body;
+
+    if (!identifier) {
+      return res.status(400).json({ error: "Identifier required" });
     }
 
-    // ⚠️ Token validation comes later — for now we trust it
-    const brainResult = await runPaidBrain({
-      identifier: "paid_user",
-      identifier_type: "unknown"
+    const brainResult = await runBrain({
+      identifier,
+      identifier_type,
+      paid: false
     });
 
-    const report = formatPaidReport(brainResult);
-    res.json(report);
+    return res.json(brainResult);
 
   } catch (err) {
-    console.error("REPORT ERROR:", err);
-    res.status(500).json({
-      confidence: { level: "medium", score: 50 },
-      indicators: [],
-      system_notes: ["Fallback report used"]
-    });
+
+    console.error("CHECK ERROR:", err);
+    return res.status(500).json({ error: "Internal server error" });
+
   }
 });
 
-/* PAYPAL TOKEN */
-async function getPayPalAccessToken() {
-  const auth = Buffer.from(
-    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-  ).toString("base64");
+/**
+ * PAID REPORT
+ */
+app.get("/report", async (req, res) => {
+  try {
 
-  const res = await fetch(
-    `${process.env.PAYPAL_BASE_URL}/v1/oauth2/token`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "grant_type=client_credentials"
+    const { identifier, identifier_type } = req.query;
+
+    if (!identifier) {
+      return res.status(400).json({ error: "Identifier required" });
     }
-  );
 
-  const data = await res.json();
-  return data.access_token;
-}
+    const brainResult = await runPaidBrain({
+      identifier,
+      identifier_type,
+      paid: true
+    });
 
-/* CREATE PAYPAL ORDER */
-app.post("/pay/create", async (req, res) => {
-  const token = await getPayPalAccessToken();
-  const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
+    const report = formatPaidReport(brainResult);
 
-  const response = await fetch(
-    `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        intent: "CAPTURE",
-        purchase_units: [
-          { amount: { currency_code: "USD", value: "1.49" } }
-        ],
-        application_context: {
-          return_url: `${baseUrl}/?paid=1&token=ok`,
-          cancel_url: `${baseUrl}/`
-        }
-      })
-    }
-  );
+    return res.json(report);
 
-  const order = await response.json();
-  res.json(order);
+  } catch (err) {
+
+    console.error("REPORT ERROR:", err);
+    return res.status(500).json({ error: "Internal server error" });
+
+  }
 });
 
-const PORT = process.env.PORT || 3000;
+/**
+ * FIRECRAWL TEST
+ */
+app.get("/firecrawl-test", async (req, res) => {
+
+  try {
+
+    console.log("🔥 Firecrawl test starting");
+
+    const result = await firecrawl.scrape("https://example.com", {
+      formats: ["markdown"]
+    });
+
+    console.log("🔥 Firecrawl success");
+
+    res.json({
+      success: true,
+      scraped_length: result?.markdown?.length || 0
+    });
+
+  } catch (err) {
+
+    console.error("🔥 Firecrawl error:", err.message);
+
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+
+  }
+
+});
+
 app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
+  console.log(`JustCheckIt running on port ${PORT}`);
 });

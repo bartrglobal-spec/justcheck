@@ -7,19 +7,31 @@
  * Non-judgmental.
  */
 
-module.exports = {
+export default {
   id: "consistency_mismatch",
+  type: "signal",        // explicit type for clarity
   weight: 2,
 
-  run(value) {
-    if (typeof value !== "string") return false;
+  evaluate(context) {
+    const { identifier } = context;
 
-    const normalized = value.toLowerCase().trim();
+    if (typeof identifier !== "string") return null;
+
+    const normalized = identifier.toLowerCase().trim();
 
     const hasLetters = /[a-z]/.test(normalized);
     const hasNumbers = /[0-9]/.test(normalized);
 
     // Weak mismatch signal: mixed tokens in short identifiers
-    return normalized.length < 12 && hasLetters && hasNumbers;
+    const triggered =
+      normalized.length < 12 && hasLetters && hasNumbers;
+
+    if (!triggered) return null;
+
+    return {
+      triggered: true,
+      score: this.weight,
+      reason: "Short identifier contains mixed letters and numbers"
+    };
   }
 };
