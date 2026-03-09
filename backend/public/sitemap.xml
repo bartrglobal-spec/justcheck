@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
 <url>
 <loc>https://justcheckit.app/</loc>
 <priority>1.00</priority>
 </url>
+
+<url>
+<loc>https://justcheckit.app/check-phone-number</loc>
+</url>
+
+<url>
+<loc>https://justcheckit.app/check-email-scam</loc>
+</url>
+
+<url>
+<loc>https://justcheckit.app/verify-seller</loc>
+</url>
+
+<url>
+<loc>https://justcheckit.app/check-payment-request</loc>
+</url>
+
+<url>
+<loc>https://justcheckit.app/check-before-sending-money</loc>
+</url>
+
 </urlset>
