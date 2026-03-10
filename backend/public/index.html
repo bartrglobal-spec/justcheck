@@ -241,8 +241,6 @@ margin-bottom:6px;
 margin-bottom:6px;
 }
 
-/* MOBILE OPTIMIZATION */
-
 @media (max-width:600px){
 
 .container{
@@ -277,7 +275,6 @@ font-size:18px;
 <div class="container">
 
 <!-- SCREEN 1 -->
-
 <div id="screen1" class="screen active">
 
 <div class="logo">
@@ -389,7 +386,6 @@ Informational context only. Not advice or conclusions.
 </div>
 
 <!-- SCREEN 4 -->
-
 <div id="screen4" class="screen">
 <div class="logo">justcheckit<div class="logo-line"></div></div>
 <div class="tagline">Verifying payment…</div>
@@ -424,6 +420,8 @@ Informational context only. Not advice or conclusions.
 
 <div class="tagline">Your JustCheckIt Report</div>
 
+<div class="subtext" id="checkedReportIdentifier"></div>
+
 <div class="subtext" id="summaryText"></div>
 
 <div class="preview">
@@ -434,7 +432,7 @@ Informational context only. Not advice or conclusions.
 <div class="preview-title">Mentions in public discussions</div>
 <div class="preview-bar" id="final1"></div>
 <div class="indicator">
-This phone number, email, or name appears in public discussions online.
+Public online discussions referencing this identifier were observed across indexed sources.
 </div>
 </div>
 
@@ -442,7 +440,7 @@ This phone number, email, or name appears in public discussions online.
 <div class="preview-title">Contact details across sources</div>
 <div class="preview-bar" id="final2"></div>
 <div class="indicator">
-This contact detail appears on multiple public web pages.
+This identifier appears across multiple publicly accessible web pages and listings.
 </div>
 </div>
 
@@ -450,7 +448,7 @@ This contact detail appears on multiple public web pages.
 <div class="preview-title">Identity consistency review</div>
 <div class="preview-bar" id="final3"></div>
 <div class="indicator">
-We reviewed how this contact appears across different websites.
+We reviewed how this identifier appears across different websites to evaluate consistency.
 </div>
 </div>
 
@@ -469,11 +467,11 @@ We reviewed how this contact appears across different websites.
 <div class="report-block">
 <div class="report-title">What this means</div>
 
-This phone number, email, or name appears in several public places online.<br><br>
+This identifier appears in publicly available information across the web.<br><br>
 
-This does not mean the person is a scammer. However, when a contact appears in many public discussions or listings, it can sometimes be linked to online transactions.<br><br>
+These observations do not determine intent or identity. However, when contact details appear in multiple public discussions or listings, it can sometimes be associated with online transactions or marketplace activity.<br><br>
 
-If someone you do not know asks for money using this contact, it may be safer to verify their identity before sending payment.
+If someone you do not know asks for money using this contact, consider verifying their identity before sending payment.
 
 </div>
 
@@ -516,8 +514,6 @@ Run another check
 </div>
 
 <script>
-
-/* YOUR ORIGINAL SCRIPT — UNCHANGED */
 
 let identifier="";
 
@@ -606,6 +602,9 @@ setTimeout(()=>{
 
 hideAllScreens();
 document.getElementById("screen6").classList.add("active");
+
+document.getElementById("checkedReportIdentifier").innerText=
+"Identifier checked: "+identifier;
 
 document.getElementById("final1").style.width=data.public_mentions+"%";
 document.getElementById("final2").style.width=data.contact_signals+"%";

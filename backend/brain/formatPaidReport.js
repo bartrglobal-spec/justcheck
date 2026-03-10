@@ -5,7 +5,14 @@ export default function formatPaidReport(brainResult = {}) {
     indicators = [],
     explanation = "",
     identifier,
-    identifier_type
+    identifier_type,
+
+    // enrichment signals (if present)
+    contextual_hits = 0,
+    discussion_mentions_count = 0,
+    warning_mentions_count = 0,
+    has_web_presence = false
+
   } = brainResult;
 
   const level = confidence?.riskLevel || "amber";
@@ -15,27 +22,61 @@ export default function formatPaidReport(brainResult = {}) {
 
   if (level === "green") {
     summary =
-      "A healthy amount of publicly observable information appears to be connected to this identifier. Nothing immediately stands out as unusual, but this is not a guarantee of safety.";
+      "Publicly visible information connected to this identifier appears relatively consistent across observed sources. No strong warning patterns were detected, though this is not a guarantee of safety.";
   }
 
   else if (level === "amber") {
     summary =
-      "A mix of available information and uncertainty appears to be connected to this identifier. Some signals are present, but the overall picture remains unclear.";
+      "Some publicly observable signals referencing this identifier were detected across indexed web sources. The available information presents a mixed or incomplete picture, which may warrant additional verification before sending money.";
   }
 
   else if (level === "red") {
     summary =
-      "Multiple public signals referencing this identifier were observed across publicly available sources. Some patterns may warrant additional caution before sending money.";
+      "Multiple public signals referencing this identifier were detected across indexed sources. Some discussion patterns include cautionary or warning language that may warrant increased care before sending payment.";
   }
 
   else {
     summary =
-      "There is not enough publicly observable information available to confidently describe this identifier.";
+      "Limited publicly observable information is connected to this identifier, making it difficult to draw meaningful context from available sources.";
   }
 
   const publicMentions = score;
   const contactSignals = Math.max(15, Math.min(100, score * 0.9));
   const identityScore = Math.max(15, Math.min(100, score * 0.75));
+
+  /* Build signal observations */
+
+  const signalObservations = [];
+
+  if (contextual_hits > 0) {
+    signalObservations.push(
+      `${contextual_hits} contextual web signal${contextual_hits > 1 ? "s were" : " was"} detected across indexed sources.`
+    );
+  }
+
+  if (discussion_mentions_count > 0) {
+    signalObservations.push(
+      `${discussion_mentions_count} public discussion reference${discussion_mentions_count > 1 ? "s were" : " was"} observed online.`
+    );
+  }
+
+  if (warning_mentions_count > 0) {
+    signalObservations.push(
+      `${warning_mentions_count} discussion reference${warning_mentions_count > 1 ? "s include" : " includes"} cautionary or warning language.`
+    );
+  }
+
+  if (has_web_presence === true) {
+    signalObservations.push(
+      "This identifier appears across publicly accessible web pages or indexed sources."
+    );
+  }
+
+  const combinedExplanation =
+    explanation +
+    (signalObservations.length
+      ? "\n\nSignal observations:\n• " + signalObservations.join("\n• ")
+      : "");
 
   return {
 
@@ -49,7 +90,7 @@ export default function formatPaidReport(brainResult = {}) {
 
     summary,
 
-    explanation,
+    explanation: combinedExplanation,
 
     indicators: indicators
       .filter(i => i && i.message)
@@ -63,7 +104,7 @@ export default function formatPaidReport(brainResult = {}) {
     identity_score: identityScore,
 
     disclaimer:
-      "This report provides informational context only. It is not a recommendation, judgment, or guarantee. Always use your own judgment before sending money."
+      "This report provides informational context only. It is not a recommendation, judgment, or guarantee. Observations are based on publicly accessible information and automated analysis. Always use your own judgment before sending money."
 
   };
 }
