@@ -1,6 +1,34 @@
 import fetch from "node-fetch";
 
+/* ----------------------------- */
+/* Directory Sites (Ignore)      */
+/* ----------------------------- */
+
+const DIRECTORY_SITES = [
+  "hitta.se",
+  "telefonforsaljare.nu",
+  "truecaller",
+  "whocalledme",
+  "numlookup",
+  "tellows",
+  "shouldianswer",
+  "sync.me",
+  "numspy",
+  "unknownphone",
+  "who-called",
+  "800notes"
+];
+
+function isDirectory(url) {
+  if (!url) return false;
+
+  const lower = url.toLowerCase();
+
+  return DIRECTORY_SITES.some(site => lower.includes(site));
+}
+
 export default async function webSignal(query) {
+
   if (!query) {
     return {
       resultCount: 0,
@@ -11,8 +39,9 @@ export default async function webSignal(query) {
   }
 
   try {
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+    const timeout = setTimeout(() => controller.abort(), 2000);
 
     const apiKey = process.env.GOOGLE_API_KEY;
     const cx = process.env.GOOGLE_CX;
@@ -21,9 +50,11 @@ export default async function webSignal(query) {
       throw new Error("Missing Google API credentials");
     }
 
-    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=${apiKey}&cx=${cx}`;
+    const url =
+      `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=${apiKey}&cx=${cx}`;
 
     const response = await fetch(url, { signal: controller.signal });
+
     clearTimeout(timeout);
 
     if (!response.ok) {
@@ -32,17 +63,19 @@ export default async function webSignal(query) {
 
     const data = await response.json();
 
-    // -----------------------------
-    // Result Count
-    // -----------------------------
+    /* ----------------------------- */
+    /* Result Count                  */
+    /* ----------------------------- */
+
     const resultCount = parseInt(
       data?.searchInformation?.totalResults || "0",
       10
     );
 
-    // -----------------------------
-    // Presence Tier Logic
-    // -----------------------------
+    /* ----------------------------- */
+    /* Presence Tier Logic           */
+    /* ----------------------------- */
+
     let presenceTier = "none";
 
     if (resultCount >= 1 && resultCount <= 2) {
@@ -55,16 +88,25 @@ export default async function webSignal(query) {
       presenceTier = "strong";
     }
 
-    // -----------------------------
-    // Title Extraction (Top 3 Only)
-    // -----------------------------
-    const titles = (data.items || [])
+    /* ----------------------------- */
+    /* Filter Directory Sites        */
+    /* ----------------------------- */
+
+    const filteredResults = (data.items || [])
+      .filter(item => !isDirectory(item.link));
+
+    /* ----------------------------- */
+    /* Title Extraction (Top 3)      */
+    /* ----------------------------- */
+
+    const titles = filteredResults
       .slice(0, 3)
       .map(item => (item.title || "").toLowerCase());
 
-    // -----------------------------
-    // Anomaly Keyword Scan
-    // -----------------------------
+    /* ----------------------------- */
+    /* Anomaly Keyword Scan          */
+    /* ----------------------------- */
+
     const keywords = [
       "scam",
       "fraud",
@@ -83,7 +125,10 @@ export default async function webSignal(query) {
       }
     }
 
-    // Apply modifier ONLY if 2+ hits (your locked rule B)
+    /* ----------------------------- */
+    /* Apply Modifier Rule           */
+    /* ----------------------------- */
+
     const anomalyModifier = anomalyHits >= 2 ? -0.08 : 0;
 
     return {
@@ -94,6 +139,7 @@ export default async function webSignal(query) {
     };
 
   } catch (err) {
+
     console.error("WEB SIGNAL ERROR:", err);
 
     return {
@@ -102,5 +148,7 @@ export default async function webSignal(query) {
       anomalyHits: 0,
       anomalyModifier: 0
     };
+
   }
+
 }

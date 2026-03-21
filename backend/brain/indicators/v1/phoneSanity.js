@@ -1,17 +1,16 @@
 /**
- * PHONE SANITY INDICATOR — v1
- * ---------------------------
- * Performs basic structural phone validation.
- * Structural only. No verdicts.
+ * Indicator: phone_sanity
+ * -----------------------
+ * Performs basic structural validation of phone identifiers.
+ * Structural analysis only. No verdicts.
  */
 
 export default {
   id: "phone_sanity",
-  type: "signal",
-  weight: 4,
+  order: 40,
 
-  evaluate(context = {}) {
-    const { identifier, identifier_type } = context;
+  run(brain) {
+    const { identifier, identifier_type } = brain;
 
     // Only applies to phone identifiers
     if (!identifier || identifier_type !== "phone") {
@@ -24,13 +23,15 @@ export default {
     // Rule: Very short numbers are unusual
     if (digits.length < 8) {
       return {
-        triggered: true,
-        score: this.weight,
-        reason: "Phone number unusually short"
+        level: "amber",
+        code: "PHONE_TOO_SHORT"
       };
     }
 
-    // Format looks structurally plausible → no signal
-    return null;
+    // Format looks structurally plausible
+    return {
+      level: "green",
+      code: "PHONE_FORMAT_PLAUSIBLE"
+    };
   }
 };

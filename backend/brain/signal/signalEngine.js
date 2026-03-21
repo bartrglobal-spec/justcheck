@@ -9,6 +9,17 @@ import path from "path";
 
 const STORE_PATH = path.resolve("./brain/persistence/signals.json");
 
+/* -------------------- KEY NORMALIZATION -------------------- */
+
+function normalizeKey(identifier) {
+
+  if (!identifier) return identifier;
+
+  // ensure consistent storage key
+  return String(identifier).trim();
+
+}
+
 /* -------------------- STORE LOAD -------------------- */
 
 function loadStore() {
@@ -49,12 +60,14 @@ function saveStore(store) {
 
 export function getPublicSignals(identifier) {
 
+  const key = normalizeKey(identifier);
+
   const store = loadStore();
   const now = new Date().toISOString();
 
-  if (!store[identifier]) {
+  if (!store[key]) {
 
-    store[identifier] = {
+    store[key] = {
       first_seen_at: now,
       last_checked_at: now,
 
@@ -69,13 +82,13 @@ export function getPublicSignals(identifier) {
 
   } else {
 
-    store[identifier].last_checked_at = now;
+    store[key].last_checked_at = now;
 
   }
 
   saveStore(store);
 
-  return store[identifier];
+  return store[key];
 
 }
 
@@ -83,12 +96,14 @@ export function getPublicSignals(identifier) {
 
 export function updatePublicSignals(identifier, externalSignals = {}) {
 
+  const key = normalizeKey(identifier);
+
   const store = loadStore();
   const now = new Date().toISOString();
 
-  if (!store[identifier]) {
+  if (!store[key]) {
 
-    store[identifier] = {
+    store[key] = {
       first_seen_at: now,
       last_checked_at: now,
 
@@ -103,7 +118,7 @@ export function updatePublicSignals(identifier, externalSignals = {}) {
 
   }
 
-  const entry = store[identifier];
+  const entry = store[key];
 
   const {
     discussion_mentions_count = 0,
@@ -148,12 +163,14 @@ export function updatePublicSignals(identifier, externalSignals = {}) {
 
 export function savePublicSignals(identifier, updater) {
 
+  const key = normalizeKey(identifier);
+
   const store = loadStore();
   const now = new Date().toISOString();
 
-  if (!store[identifier]) {
+  if (!store[key]) {
 
-    store[identifier] = {
+    store[key] = {
       first_seen_at: now,
       last_checked_at: now,
 
@@ -168,10 +185,12 @@ export function savePublicSignals(identifier, updater) {
 
   }
 
-  updater(store[identifier]);
+  updater(store[key]);
 
-  store[identifier].last_checked_at = now;
+  store[key].last_checked_at = now;
 
   saveStore(store);
 
 }
+
+export default getPublicSignals;

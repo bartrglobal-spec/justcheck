@@ -1,46 +1,47 @@
-// brain/indicators/v1/firstSeen.js
+// backend/brain/indicators/v1/firstSeen.js
 
 /**
- * FIRST SEEN INDICATOR — v1
- * -------------------------
- * Emits age-based signals using persistence lookup data.
+ * Indicator: first_seen
+ * ---------------------
+ * Emits time-based indicators using persistence lookup data.
  * Read-only. Does NOT write.
  */
 
 export default {
   id: "first_seen",
-  type: "signal",
-  weight: 3,
+  order: 10,
 
-  evaluate(context = {}) {
-    const { persistence } = context;
+  run(brain) {
+    const { persistence } = brain;
 
     if (!persistence) return null;
 
-    // Never seen before (stronger signal)
+    // Identifier never seen before
     if (persistence.never_seen === true) {
       return {
-        triggered: true,
-        score: this.weight,
-        reason: "Identifier has never been seen before"
+        level: "amber",
+        code: "NEVER_SEEN_BEFORE"
       };
     }
 
-    // Seen within last 7 days
     const oneWeekMs = 1000 * 60 * 60 * 24 * 7;
 
-    if (
-      typeof persistence.first_seen_age_ms === "number" &&
-      persistence.first_seen_age_ms < oneWeekMs
-    ) {
+    if (typeof persistence.first_seen_age_ms === "number") {
+      // Seen recently
+      if (persistence.first_seen_age_ms < oneWeekMs) {
+        return {
+          level: "green",
+          code: "FIRST_SEEN_RECENT"
+        };
+      }
+
+      // Seen long ago (stable identifier)
       return {
-        triggered: true,
-        score: 1,
-        reason: "Identifier first seen recently"
+        level: "green",
+        code: "FIRST_SEEN_LONG_AGO"
       };
     }
 
-    // Older presence = neutral (do not trigger)
     return null;
   }
 };

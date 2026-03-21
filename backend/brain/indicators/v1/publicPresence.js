@@ -28,7 +28,7 @@ export default {
       };
     }
 
-    // 🟠 Some warning presence
+    // 🟠 Moderate warning presence
     if (warningHits >= 3) {
       return {
         level: "amber",
@@ -38,7 +38,17 @@ export default {
       };
     }
 
-    // 🟢 Web presence detected but low warning density
+    // 🔴 NEW: SINGLE WARNING MUST NOT BE GREEN
+    if (warningHits >= 1) {
+      return {
+        level: "amber",
+        code: "SINGLE_PUBLIC_WARNING",
+        message:
+          "This identifier appears at least once in public sources alongside warning or scam-related language. Proceed with caution."
+      };
+    }
+
+    // 🟢 Web presence detected (no warnings)
     if (hasPresence || discussionHits > 0) {
       return {
         level: "green",

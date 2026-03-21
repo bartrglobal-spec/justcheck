@@ -7,16 +7,26 @@
 
 export default function sanitizeReport(report) {
   return {
+
     identifier: report.identifier,
     identifier_type: report.identifier_type,
 
     confidence: report.confidence,
     risk_color: report.risk_color,
     headline: report.headline,
+    explanation: report.explanation,
 
     indicators: Array.isArray(report.indicators)
       ? report.indicators
       : [],
+
+    publicSignals: report.publicSignals ?? {},
+
+    externalSignalSummary: report.externalSignalSummary ?? {
+      has_web_presence: false,
+      discussion_mentions_count: 0,
+      warning_mentions_count: 0
+    },
 
     system_notes: Array.isArray(report.system_notes)
       ? report.system_notes
@@ -28,5 +38,6 @@ export default function sanitizeReport(report) {
       generated_at:
         report.meta?.generated_at ?? new Date().toISOString()
     }
+
   };
 }

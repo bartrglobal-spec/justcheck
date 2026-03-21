@@ -1,8 +1,9 @@
 /**
- * confidence (Risk Engine v7 - External Aligned)
- * -----------------------------------------------
- * Produces unified risk score and level.
- * Aligns with enrichment-first architecture.
+ * confidence (Risk Engine v10 - External Truth Integration)
+ * --------------------------------------------------------
+ * FIXED:
+ * - External score properly used
+ * - Frontend compatibility restored (riskScore)
  */
 
 export default function buildConfidence(
@@ -12,7 +13,8 @@ export default function buildConfidence(
   externalSignals = {}
 ) {
 
-  let score = 50;
+  // ZERO BASE
+  let score = 0;
 
   // -----------------------------------
   // Public Signals
@@ -22,98 +24,152 @@ export default function buildConfidence(
     warning_mentions_count = 0,
     has_web_presence = false,
     has_business_profile = false,
-    first_seen_at,
-    last_checked_at
+    first_seen_at
   } = publicSignals;
 
   // -----------------------------------
-  // External Signals (Enrichment Layer)
+  // External Signals
   // -----------------------------------
 
   const {
     score: externalScore = 0,
-    severity: externalSeverity = "none",
     discussion_mentions_count = 0,
-    warning_mentions_count: externalWarningCount = 0
+    warning_mentions_count: externalWarningCount = 0,
+    contextual_hits = 0,
+    texts = []
   } = externalSignals;
+
+  // -----------------------------------
+  // 🔴 PRIMARY: External Score (FIXED)
+  // -----------------------------------
+
+  if (externalScore > 0) {
+    score += externalScore * 0.8;
+  }
 
   // -----------------------------------
   // Indicator Adjustments
   // -----------------------------------
 
   for (const ind of indicators) {
-
     if (ind && ind.triggered === true && typeof ind.score === "number") {
       score += ind.score;
     }
-
   }
 
   // -----------------------------------
-  // External Context Adjustment
+  // HARD RED FLAGS
   // -----------------------------------
 
-  if (externalScore > 0) {
-
-    const normalizedImpact = Math.min(externalScore / 3, 30);
-    score += normalizedImpact;
-
+  if (externalWarningCount >= 5) {
+    score += 30;
   }
 
-  if (externalSeverity === "red") {
+  if (externalWarningCount >= 10) {
+    score += 50;
+  }
+
+  if (contextual_hits >= 5 && externalWarningCount >= 3) {
+    score += 25;
+  }
+
+  // -----------------------------------
+  // DISCUSSION WITHOUT WARNINGS
+  // -----------------------------------
+
+  if (discussion_mentions_count >= 10 && externalWarningCount === 0) {
     score += 15;
   }
 
-  if (externalSeverity === "amber") {
-    score += 8;
+  if (discussion_mentions_count >= 20 && externalWarningCount === 0) {
+    score += 25;
   }
 
   // -----------------------------------
-  // External Discussion Signals
+  // Reddit / Language Signals
   // -----------------------------------
 
-  if (discussion_mentions_count > 0) {
+  let scamLanguageHits = 0;
 
-    const discussionImpact = Math.min(discussion_mentions_count * 3, 15);
-    score += discussionImpact;
+  const scamKeywords = [
+    "scam",
+    "fraud",
+    "beware",
+    "avoid",
+    "do not trust",
+    "fake",
+    "spam",
+    "phishing"
+  ];
 
+  if (Array.isArray(texts)) {
+    for (const t of texts) {
+      const lower = (t || "").toLowerCase();
+
+      for (const keyword of scamKeywords) {
+        if (lower.includes(keyword)) {
+          scamLanguageHits++;
+          break;
+        }
+      }
+    }
   }
 
-  if (externalWarningCount > 0) {
+  if (scamLanguageHits >= 3) score += 20;
+  if (scamLanguageHits >= 6) score += 35;
 
-    const warningImpact = Math.min(externalWarningCount * 10, 30);
-    score += warningImpact;
+  // -----------------------------------
+  // Email Scam Patterns
+  // -----------------------------------
 
+  let emailScamHits = 0;
+
+  const emailPatterns = [
+    "urgent",
+    "act now",
+    "verify your account",
+    "click here",
+    "payment required",
+    "confirm your details"
+  ];
+
+  if (Array.isArray(texts)) {
+    for (const t of texts) {
+      const lower = (t || "").toLowerCase();
+
+      for (const keyword of emailPatterns) {
+        if (lower.includes(keyword)) {
+          emailScamHits++;
+          break;
+        }
+      }
+    }
   }
+
+  if (emailScamHits >= 3) score += 15;
+  if (emailScamHits >= 6) score += 25;
 
   // -----------------------------------
   // Public Warning Adjustment
   // -----------------------------------
 
   if (warning_mentions_count > 0) {
-
     score += Math.min(warning_mentions_count * 10, 30);
-
   }
 
   // -----------------------------------
-  // Identifier Context Logic
+  // Identifier Context
   // -----------------------------------
 
   if (identifierType === "phone_business") {
 
-    if (!has_web_presence) {
-      score += 10;
-    }
-
-    if (!has_business_profile) {
-      score += 10;
-    }
+    if (!has_web_presence) score += 10;
+    if (!has_business_profile) score += 10;
 
   }
 
   // -----------------------------------
-  // Time-Based Stabilization
+  // Time Stabilization
   // -----------------------------------
 
   if (first_seen_at) {
@@ -122,39 +178,21 @@ export default function buildConfidence(
       (Date.now() - new Date(first_seen_at).getTime()) /
       (1000 * 60 * 60 * 24);
 
-    if (daysObserved > 7) score -= 5;
     if (daysObserved > 30) score -= 5;
     if (daysObserved > 90) score -= 5;
     if (daysObserved > 180) score -= 5;
 
   }
 
-  if (first_seen_at && last_checked_at) {
-
-    const hoursBetweenChecks =
-      (new Date(last_checked_at).getTime() -
-        new Date(first_seen_at).getTime()) /
-      (1000 * 60 * 60);
-
-    if (hoursBetweenChecks > 24 && warning_mentions_count === 0) {
-      score -= 5;
-    }
-
-    if (hoursBetweenChecks > 72 && warning_mentions_count === 0) {
-      score -= 5;
-    }
-
-  }
-
   // -----------------------------------
-  // Clamp Score
+  // Clamp
   // -----------------------------------
 
   if (score < 0) score = 0;
   if (score > 100) score = 100;
 
   // -----------------------------------
-  // Risk Level Mapping
+  // Risk Level
   // -----------------------------------
 
   let riskLevel = "green";
@@ -166,7 +204,8 @@ export default function buildConfidence(
   }
 
   return {
-    riskScore: score,
+    score,        // backend internal
+    riskScore: score, // 🔴 REQUIRED for frontend
     riskLevel
   };
 

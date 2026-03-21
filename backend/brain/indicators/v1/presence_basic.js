@@ -1,17 +1,16 @@
 /**
- * BASIC PRESENCE INDICATOR — v1
- * -----------------------------
+ * Indicator: basic_presence
+ * -------------------------
  * Minimal structural presence check.
- * Ensures identifier is non-empty after trimming.
+ * Ensures identifier is not empty after trimming.
  */
 
 export default {
   id: "basic_presence",
-  type: "signal",
-  weight: 1,
+  order: 1,
 
-  evaluate(context = {}) {
-    const { identifier } = context;
+  run(brain) {
+    const { identifier } = brain;
 
     if (typeof identifier !== "string") return null;
 
@@ -19,13 +18,11 @@ export default {
 
     if (trimmed.length === 0) {
       return {
-        triggered: true,
-        score: this.weight,
-        reason: "Identifier is empty after trimming"
+        level: "amber",
+        code: "LIMITED_DATA_AVAILABLE"
       };
     }
 
-    // Valid presence → no signal
     return null;
   }
 };

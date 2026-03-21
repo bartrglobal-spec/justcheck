@@ -37,6 +37,8 @@ export async function loadIndicators({ includePremium = false } = {}) {
       if (indicator.premium && !includePremium) continue;
 
       indicators.push(indicator);
+
+console.log("Loaded indicator:", indicator.id || file);
     } catch (err) {
       console.error("Failed loading indicator:", file, err);
     }

@@ -13,6 +13,16 @@ Web / discussion presence signal
 */
 export async function webPresenceSignal(input) {
 
+  // 🔴 STEP 1 FIX: BLOCK IN FREE MODE
+  if (!input?.paid) {
+    return {
+      id: "web_presence",
+      status: "neutral",
+      score: 0,
+      reason: "skipped_free_mode"
+    };
+  }
+
   if (!input?.url) {
     return {
       id: "web_presence",

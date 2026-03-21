@@ -1,165 +1,247 @@
-/**
- * externalSignals.js
- * -------------------
- * Context-Aware External Signal Engine (v6)
- * DuckDuckGo search + Firecrawl page crawling + caching
- */
-
 import dotenv from "dotenv";
 dotenv.config();
 
 import axios from "axios";
 import * as cheerio from "cheerio";
-import FirecrawlApp from "firecrawl";
 
-console.log("externalSignals.js LOADED (Context-Aware v6)");
-console.log("Firecrawl key:", process.env.FIRECRAWL_API_KEY ? "YES" : "NO");
+/* Scam seeder */
+import scamSignalSeeder from "./signal/scamSignalSeeder.js";
 
-const firecrawl = new FirecrawlApp({
-  apiKey: process.env.FIRECRAWL_API_KEY
-});
+console.log("externalSignals.js LOADED (v29 STABILITY FIX)");
 
 /* ---------------- CACHE ---------------- */
 
-const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
+const CACHE_TTL = 1000 * 60 * 10;
 const signalCache = new Map();
 
 /* ---------------- CONFIG ---------------- */
 
-const PROXIMITY_WINDOW = 200;
-const MAX_CRAWL_PAGES = 5;
+const MAX_REDDIT_POSTS = 10;
+
+const DIRECTORY_SITES = [
+"truecaller","tellows","numlookup","whocalledme","unknownphone",
+"sync.me","syncme","hitta","whocalled","shouldianswer",
+"callerr","numberguru","phoneowner","phone-directory",
+"reversephone","whitepages","yellowpages"
+];
 
 const STRONG_TERMS = [
-  "scam",
-  "scammer",
-  "fraud",
-  "fraudster",
-  "ripoff",
-  "con artist",
-  "criminal",
-  "phishing",
-  "fake",
-  "blacklist",
+"scam","scammer","fraud","fraudster","ripoff","con artist",
+"criminal","phishing","fake","blacklist","stole","stolen",
+"steal","thief","theft","extortion","spoofing"
 ];
 
 const WEAK_TERMS = [
-  "suspicious",
-  "avoid",
-  "be careful",
-  "complaint",
-  "reported",
-  "warning",
-  "review",
-  "unsafe",
+"suspicious","avoid","be careful","complaint","reported",
+"warning","review","unsafe","spam","harassment",
+"unknown caller","blocked"
 ];
 
-const GENERIC_EXCLUSION_PHRASES = [
-  "how to avoid scams",
-  "tips to prevent fraud",
-  "what is phishing",
-  "stay safe online",
-  "how to protect yourself",
-  "general scam advice",
+/* ---------------- MAIN FUNCTION ---------------- */
+
+export default async function fetchExternalSignals(identifier, identifierType, options = {}) {
+
+const paid = options.paid === true;
+
+const cacheKey = `${identifier}_${identifierType}_${paid}`;
+const cached = signalCache.get(cacheKey);
+
+if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+return cached.data;
+}
+
+const variants = buildVariants(identifier, identifierType);
+
+console.log("External search variants:", variants);
+
+/* ---------------- SEARCH QUERIES ---------------- */
+
+const queries = [
+identifier,
+`${identifier} scam`,
+`${identifier} fraud`,
+`${identifier} warning`,
+`site:reddit.com ${identifier}`
 ];
 
-/* ---------------- MAIN EXPORT ---------------- */
+let texts = [];
+let urls = [];
 
-export default async function fetchExternalSignals(identifier, identifierType) {
+/* ---------------- DUCK SEARCH ---------------- */
 
-  console.log("fetchExternalSignals CALLED with:", identifier);
+for (const q of queries) {
 
-  const cacheKey = `${identifier}_${identifierType}`;
-  const cached = signalCache.get(cacheKey);
+const duckHTML = await duckSearch(q);
+if (!duckHTML) continue;
 
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log("CACHE HIT:", identifier);
-    return cached.data;
-  }
+const extracted = extractDuckResults(duckHTML);
 
-  const normalized = normalizeIdentifier(identifier, identifierType);
+texts.push(...extracted.texts);
+urls.push(...extracted.urls);
 
-  const duckHTML = await duckSearch(identifier);
+}
 
-  if (!duckHTML) {
-    return buildEmptyResult(identifier);
-  }
+console.log("Duck texts:", texts.length);
+console.log("Duck urls:", urls.length);
 
-  const { texts, urls } = extractDuckResults(duckHTML);
+/* ---------------- FILTER DIRECTORY SITES ---------------- */
 
-  const firecrawlTexts = [];
+const filteredTexts = [];
+const filteredUrls = [];
 
-  /* ---------------- FIRECRAWL PAGE CRAWL ---------------- */
+for (let i = 0; i < urls.length; i++) {
 
-  for (const url of urls.slice(0, MAX_CRAWL_PAGES)) {
+const url = (urls[i] || "").toLowerCase();
+const text = texts[i];
 
-    try {
+const isDirectory = DIRECTORY_SITES.some(site => url.includes(site));
 
-      console.log("Firecrawl crawling:", url);
+if (isDirectory) continue;
 
-      const result = await firecrawl.scrape(url, {
-        formats: ["markdown"]
-      });
+// 🔒 HARD GUARD (prevent undefined text)
+if (!text || typeof text !== "string") continue;
 
-      if (result?.markdown) {
-        firecrawlTexts.push(result.markdown.toLowerCase());
-      }
+filteredUrls.push(urls[i]);
+filteredTexts.push(text.toLowerCase());
 
-    } catch (err) {
+}
 
-      console.log("Firecrawl crawl failed:", err.message);
+console.log("Filtered texts:", filteredTexts.length);
 
-    }
+/* ---------------- REDDIT SEARCH ---------------- */
 
-  }
+const redditResults = await redditSearch(variants);
 
-  const combinedTexts = [...texts, ...firecrawlTexts];
+console.log("Reddit results:", redditResults.length);
 
-  /* ---------------- ANALYSIS ---------------- */
+for (const r of redditResults) {
+if (r && typeof r.text === "string") {
+filteredTexts.push(r.text.toLowerCase());
+}
+}
 
-  let totalScore = 0;
-  let contextualHits = 0;
-  let warningHits = 0;
+/* ---------------- SEEDER ---------------- */
 
-  for (const text of combinedTexts) {
+try {
+if (typeof scamSignalSeeder === "function") {
+scamSignalSeeder(filteredTexts, "duckduckgo+reddit");
+}
+} catch (e) {
+console.log("Seeder error:", e.message);
+}
 
-    const lowerText = text.toLowerCase();
+/* ---------------- CONTEXT ANALYSIS ---------------- */
 
-    if (isGenericScamContent(lowerText) && !lowerText.includes(normalized)) {
-      continue;
-    }
+let totalScore = 0;
+let contextualHits = 0;
+let warningHits = 0;
 
-    const analysis = analyzeContext(normalized, lowerText);
+const signals = [];
 
-    if (analysis.score > 0) {
-      contextualHits++;
-      totalScore += analysis.score;
-    }
+for (const text of filteredTexts) {
 
-    if (analysis.warning === true) {
-      warningHits++;
-    }
+// 🔒 HARD GUARD (double safety)
+if (!text || typeof text !== "string") continue;
 
-  }
+const analysis = analyzeContext(variants, text);
 
-  const severity = determineSeverity(totalScore);
+if (analysis.score > 0) {
 
-  const result = {
-    identifier,
-    score: totalScore,
-    severity,
-    contextual_hits: contextualHits,
-    source: "duckduckgo+firecrawl_pages",
-    has_web_presence: contextualHits > 0,
-    discussion_mentions_count: contextualHits,
-    warning_mentions_count: warningHits
-  };
+contextualHits++;
+totalScore += analysis.score;
 
-  signalCache.set(cacheKey, {
-    data: result,
-    timestamp: Date.now()
-  });
+signals.push({
+text,
+strength: analysis.score >= 80 ? "high" : "medium"
+});
 
-  return result;
+}
+
+if (analysis.warning) {
+warningHits++;
+}
+
+}
+
+/* ---------------- UNIQUE DOMAIN COUNT ---------------- */
+
+const domains = new Set();
+
+for (const url of filteredUrls) {
+
+try {
+const hostname = new URL(url).hostname.replace("www.", "");
+domains.add(hostname);
+} catch {}
+
+}
+
+/* ---------------- UNIQUE REDDIT THREAD COUNT ---------------- */
+
+const redditThreads = new Set();
+
+for (const r of redditResults) {
+if (r.url) redditThreads.add(r.url);
+}
+
+/* ---------------- TOTAL DISCUSSION COUNT ---------------- */
+
+const mentions = domains.size + redditThreads.size;
+
+/* ---------------- VOLUME SIGNAL ---------------- */
+
+if (mentions > 50) totalScore += 40;
+else if (mentions > 25) totalScore += 20;
+else if (mentions > 10) totalScore += 10;
+
+/* ---------------- RISK BUCKET ---------------- */
+
+let risk = "green";
+
+if (totalScore > 200) risk = "red";
+else if (totalScore > 80) risk = "amber";
+
+/* ---------------- SIGNAL STRENGTH ---------------- */
+
+let signalStrength = "none";
+
+if (contextualHits === 0) signalStrength = "none";
+else if (contextualHits < 3) signalStrength = "low";
+else if (contextualHits < 7) signalStrength = "medium";
+else signalStrength = "high";
+
+/* ---------------- RESULT ---------------- */
+
+const result = {
+
+identifier,
+
+score: totalScore,
+risk,
+
+signals,
+
+contextual_hits: contextualHits,
+
+has_web_presence: mentions > 0,
+
+discussion_mentions_count: mentions,
+warning_mentions_count: warningHits,
+
+identifier_mentions_total: mentions,
+
+signal_strength: signalStrength,
+
+source: "duckduckgo+reddit"
+
+};
+
+signalCache.set(cacheKey, {
+data: result,
+timestamp: Date.now()
+});
+
+return result;
 
 }
 
@@ -167,178 +249,204 @@ export default async function fetchExternalSignals(identifier, identifierType) {
 
 async function duckSearch(query) {
 
-  try {
+try {
 
-    const response = await axios.get(
-      "https://html.duckduckgo.com/html/",
-      {
-        params: { q: `"${query}"` },
-        headers: { "User-Agent": "Mozilla/5.0" },
-        timeout: 8000
-      }
-    );
+const response = await axios.get(
+"https://html.duckduckgo.com/html/",
+{
+params: { q: query },
+headers: { "User-Agent": "Mozilla/5.0" },
+timeout: 12000
+}
+);
 
-    return response.data;
+return response.data;
 
-  } catch (err) {
+} catch (e) {
 
-    console.log("Duck search failed:", err.message);
-    return null;
-
-  }
+console.log("Duck search error:", e.message);
+return null;
 
 }
 
-/* ---------------- RESULT EXTRACTION ---------------- */
+}
+
+/* ---------------- REDDIT SEARCH ---------------- */
+
+async function redditSearch(variants) {
+
+const collected = [];
+
+try {
+
+for (const variant of variants.slice(0, 8)) {
+
+const response = await axios.get(
+"https://www.reddit.com/search.json",
+{
+params: {
+q: variant,
+limit: MAX_REDDIT_POSTS,
+sort: "relevance"
+},
+headers: { "User-Agent": "JustCheckItBot/1.0" },
+timeout: 8000
+}
+);
+
+const posts = response.data?.data?.children || [];
+
+for (const p of posts) {
+
+const title = p.data.title || "";
+const body = p.data.selftext || "";
+const permalink = p.data.permalink || "";
+
+const url = permalink
+? `https://reddit.com${permalink}`
+: null;
+
+const combined = `${title} ${body}`.trim();
+
+if (combined.length > 0) {
+collected.push({
+text: combined.toLowerCase(),
+url
+});
+}
+
+}
+
+}
+
+} catch (e) {
+
+console.log("Reddit search error:", e.message);
+
+}
+
+return collected;
+
+}
+
+/* ---------------- DUCK PARSER ---------------- */
 
 function extractDuckResults(html) {
 
-  const $ = cheerio.load(html);
+const $ = cheerio.load(html);
 
-  const texts = [];
-  const urls = [];
+const texts = [];
+const urls = [];
 
-  $(".result").each((_, el) => {
+$(".result").each((_, el) => {
 
-    const title = $(el).find(".result__title").text();
-    const snippet = $(el).find(".result__snippet").text();
-    const link = $(el).find(".result__url").attr("href");
+const title = $(el).find(".result__a").text();
+const snippet = $(el).find(".result__snippet").text();
+let link = $(el).find(".result__a").attr("href");
 
-    const combined = `${title} ${snippet}`.trim();
+const combined = `${title} ${snippet}`.trim();
 
-    if (combined.length > 20) {
-      texts.push(combined.toLowerCase());
-    }
+if (combined.length > 20) {
+texts.push(combined.toLowerCase());
+} else {
+texts.push(null); // keep index alignment
+}
 
-    if (link && link.startsWith("http")) {
-      urls.push(link);
-    }
+if (link) {
 
-  });
+if (link.includes("uddg=")) {
+urls.push(decodeURIComponent(link.split("uddg=")[1]));
+} else if (link.startsWith("http")) {
+urls.push(link);
+} else {
+urls.push(null);
+}
 
-  return { texts, urls };
+} else {
+urls.push(null);
+}
+
+});
+
+return { texts, urls };
 
 }
 
 /* ---------------- CONTEXT ANALYSIS ---------------- */
 
-function analyzeContext(identifier, text) {
+function analyzeContext(variants, text) {
 
-  let score = 0;
-  let warning = false;
+if (!text || typeof text !== "string") {
+return { score: 0, warning: false };
+}
 
-  const occurrences = countOccurrences(text, identifier);
+let score = 0;
+let warning = false;
 
-  if (occurrences === 0) {
-    return { score: 0, warning: false };
-  }
+const normalized = text.toLowerCase();
+const digitsOnly = normalized.replace(/\D/g, "");
 
-  score += 5;
+for (const variant of variants) {
 
-  if (occurrences >= 3) {
-    score += 20;
-  }
+if (!variant) continue;
 
-  for (const term of STRONG_TERMS) {
+const v = variant.toLowerCase();
+const vDigits = v.replace(/\D/g, "");
 
-    if (isWithinProximity(identifier, term, text)) {
-      score += 60;
-      warning = true;
-    }
+if (!normalized.includes(v) && !digitsOnly.includes(vDigits)) continue;
 
-  }
+for (const term of STRONG_TERMS) {
+if (normalized.includes(term)) {
+score += 80;
+warning = true;
+break;
+}
+}
 
-  for (const term of WEAK_TERMS) {
+for (const term of WEAK_TERMS) {
+if (normalized.includes(term)) {
+score += 40;
+warning = true;
+break;
+}
+}
 
-    if (isWithinProximity(identifier, term, text)) {
-      score += 40;
-      warning = true;
-    }
-
-  }
-
-  return { score, warning };
+break;
 
 }
 
-/* ---------------- HELPERS ---------------- */
-
-function normalizeIdentifier(id, type) {
-
-  if (!id) return "";
-
-  switch (type) {
-
-    case "phone":
-      return id.replace(/\D/g, "");
-
-    case "email":
-      return id.toLowerCase();
-
-    case "name":
-    case "business":
-      return id
-        .toLowerCase()
-        .replace(/[^\w\s]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    default:
-      return id.toLowerCase();
-
-  }
+return { score, warning };
 
 }
 
-function countOccurrences(text, target) {
+/* ---------------- PHONE VARIANTS ---------------- */
 
-  const regex = new RegExp(target, "g");
-  const matches = text.match(regex);
+function buildVariants(id, type) {
 
-  return matches ? matches.length : 0;
+if (type !== "phone") return [id.toLowerCase()];
+
+const digits = id.replace(/\D/g, "");
+
+const variants = new Set();
+
+variants.add(id);
+variants.add(digits);
+
+if (digits.length >= 10) {
+variants.add(digits.replace(/(\d{3})(\d{3})(\d+)/, "$1 $2 $3"));
+variants.add(digits.replace(/(\d{3})(\d{3})(\d+)/, "$1-$2-$3"));
+}
+
+if (id.startsWith("+")) {
+
+const withoutCountry = digits.slice(-10);
+
+variants.add("0" + withoutCountry.slice(1));
+variants.add(`${withoutCountry.slice(0,3)} ${withoutCountry.slice(3,6)} ${withoutCountry.slice(6)}`);
+variants.add(`${withoutCountry.slice(0,3)}-${withoutCountry.slice(3,6)}-${withoutCountry.slice(6)}`);
 
 }
 
-function isWithinProximity(identifier, term, text) {
-
-  const idIndex = text.indexOf(identifier);
-  const termIndex = text.indexOf(term);
-
-  if (idIndex === -1 || termIndex === -1) return false;
-
-  return Math.abs(idIndex - termIndex) <= PROXIMITY_WINDOW;
-
-}
-
-function isGenericScamContent(text) {
-
-  return GENERIC_EXCLUSION_PHRASES.some((phrase) =>
-    text.includes(phrase)
-  );
-
-}
-
-function determineSeverity(score) {
-
-  if (score >= 80) return "red";
-  if (score >= 50) return "amber";
-  if (score >= 20) return "light_amber";
-
-  return "none";
-
-}
-
-function buildEmptyResult(identifier) {
-
-  return {
-    identifier,
-    score: 0,
-    severity: "none",
-    contextual_hits: 0,
-    source: "duckduckgo+firecrawl_pages",
-    has_web_presence: false,
-    discussion_mentions_count: 0,
-    warning_mentions_count: 0
-  };
+return [...variants];
 
 }

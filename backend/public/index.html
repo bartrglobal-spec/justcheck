@@ -1,664 +1,331 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>JustCheckIt – Check Before Sending Money | Phone, Email & Payment Safety Check</title>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-7715K3E9KY"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-7715K3E9KY');
-</script>
-
-<meta name="description" content="Check a name, phone number, email or payment reference before sending money. JustCheckIt helps people review publicly visible signals that could matter before a payment.">
-
-<meta name="keywords" content="check before sending money, verify payment request, phone number scam check, email scam lookup, check seller before paying, payment safety check">
-
-<meta name="author" content="JustCheckIt">
-
-<link rel="canonical" href="https://justcheckit.app">
-
-<!-- Open Graph for social sharing -->
-<meta property="og:title" content="JustCheckIt – Check Before Sending Money">
-<meta property="og:description" content="Paste a name, phone number, email or payment reference and review signals before sending a payment.">
-<meta property="og:url" content="https://justcheckit.app">
-<meta property="og:type" content="website">
-
-<!-- Twitter preview -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="JustCheckIt – Check Before Sending Money">
-<meta name="twitter:description" content="Check a name, phone number or payment reference before sending money.">
-
-<!-- Structured data for search engines -->
-<script type="application/ld+json">
-{
-"@context": "https://schema.org",
-"@type": "WebSite",
-"name": "JustCheckIt",
-"url": "https://justcheckit.app",
-"description": "Tool that helps people review signals before sending money by checking names, emails, phone numbers or payment references.",
-"potentialAction": {
-"@type": "SearchAction",
-"target": "https://justcheckit.app/?identifier={search_term}",
-"query-input": "required name=search_term"
-}
-}
-</script>
+<title>JustCheckIt – The First Step Before Sending Money</title>
 
 <style>
-
-body{
-margin:0;
-font-family: Arial, Helvetica, sans-serif;
-background:#0b0f1a;
-color:#ffffff;
-
-display:flex;
-align-items:center;
-justify-content:center;
-min-height:100vh;
-}
-
-.container{
-width:100%;
-max-width:520px;
-margin:auto;
-text-align:center;
-padding:40px 20px;
-}
-
-.logo{
-font-size:44px;
-font-weight:700;
-}
-
-.logo-line{
-height:6px;
-width:160px;
-margin:14px auto 34px auto;
-border-radius:6px;
-background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
-}
-
-.tagline{
-font-size:22px;
-margin-bottom:10px;
-}
-
-.subtext{
-color:#a0a8b8;
-font-size:14px;
-line-height:1.5;
-margin-bottom:34px;
-}
-
-.input{
-width:100%;
-padding:18px;
-border-radius:8px;
-border:none;
-font-size:16px;
-margin-bottom:14px;
-box-sizing:border-box;
-}
-
-.button{
-width:100%;
-background:#f4c400;
-color:#000;
-padding:18px;
-border:none;
-border-radius:8px;
-font-size:19px;
-font-weight:700;
-cursor:pointer;
-}
-
-.button:hover{
-background:#ffd84d;
-}
-
-.payButton{
-animation:pulse 1.6s infinite;
-}
-
-@keyframes pulse{
-0%{box-shadow:0 0 0 0 rgba(0,0,0,.15);}
-70%{box-shadow:0 0 0 10px rgba(0,0,0,0);}
-100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}
-}
-
-.note{
-margin-top:18px;
-font-size:13px;
-color:#8a93a5;
-}
-
-.disclaimer{
-margin-top:38px;
-font-size:12px;
-color:#6f7788;
-}
-
-.screen{display:none;}
-.screen.active{display:block;}
-
-.scan-list{
-text-align:left;
-margin-top:28px;
-margin-bottom:30px;
-}
-
-.scan-item{
-margin-bottom:14px;
-font-size:16px;
-opacity:0;
-transform:translateY(6px);
-transition:all .35s ease;
-}
-
-.scan-item.visible{
-opacity:1;
-transform:translateY(0);
-}
-
-.progress{
-width:100%;
-height:10px;
-border-radius:6px;
-overflow:hidden;
-margin-top:30px;
-background:#111;
-}
-
-.progress-bar{
-width:0%;
-height:100%;
-background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
-animation:scanProgress 4s linear forwards;
-}
-
-@keyframes scanProgress{
-from{width:0%;}
-to{width:100%;}
-}
-
-.preview{
-text-align:left;
-background:#111827;
-padding:22px;
-border-radius:10px;
-margin-top:26px;
-}
-
-.preview-item{
-margin-bottom:24px;
-opacity:0;
-transition:opacity .4s ease;
-}
-
-.preview-item.visible{
-opacity:1;
-}
-
-.preview-title{
-font-size:15px;
-margin-bottom:10px;
-color:#cfd6e6;
-}
-
-.preview-bar{
-height:12px;
-border-radius:6px;
-background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c);
-width:0%;
-transition:width .8s ease;
-}
-
-.preview-bar.blur{
-filter:blur(2px);
-opacity:0.9;
-}
-
-.scan-preview{
-text-align:left;
-color:#cfd6e6;
-font-size:14px;
-line-height:1.8;
-margin-bottom:20px;
-}
-
-.report-block{
-text-align:left;
-margin-top:24px;
-font-size:14px;
-line-height:1.6;
-color:#cfd6e6;
-}
-
-.report-title{
-font-weight:700;
-margin-bottom:6px;
-}
-
-.indicator{
-margin-bottom:6px;
-}
-
-@media (max-width:600px){
-
-.container{
-max-width:100%;
-padding:30px 20px;
-}
-
-.logo{
-font-size:36px;
-}
-
-.tagline{
-font-size:20px;
-}
-
-.input{
-font-size:16px;
-}
-
-.button{
-font-size:18px;
-}
-
-}
-
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+body{background:#050b17;color:white;display:flex;justify-content:center;padding:40px 20px;}
+.container{width:100%;max-width:560px;}
+.hidden{display:none;}
+.logo-wrap{text-align:center;margin-bottom:40px;}
+.logo{font-size:38px;font-weight:700;}
+.logo-line{height:4px;width:160px;margin:12px auto 0 auto;border-radius:3px;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);}
+h1{font-size:30px;text-align:center;margin-bottom:10px;}
+.sub{text-align:center;color:#9fb0d6;margin-bottom:30px;}
+.card{background:#0b152a;border-radius:16px;padding:30px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 25px 60px rgba(0,0,0,0.6);}
+.search{width:100%;background:#020617;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:18px;font-size:17px;color:white;margin-bottom:16px;}
+.search::placeholder{color:#7e8baa;}
+button{width:100%;border:none;border-radius:10px;padding:18px;font-size:18px;font-weight:600;cursor:pointer;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);color:#021107;}
+button:hover{transform:translateY(-1px);}
+.promises{display:flex;justify-content:center;gap:10px;margin-top:15px;flex-wrap:wrap;}
+.promises div{font-size:13px;background:#081126;padding:7px 10px;border-radius:7px;}
+.scan-box{text-align:center;padding:40px;}
+.loader{height:6px;border-radius:6px;margin-top:20px;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);animation:scan 2s infinite;}
+@keyframes scan{0%{width:10%}50%{width:70%}100%{width:10%}}
+.identifier{text-align:center;font-size:14px;color:#9fb0d6;margin-bottom:15px;}
+.identifier strong{color:white;font-size:16px;}
+.risk-level{text-align:center;font-size:28px;font-weight:700;margin-top:6px;}
+.green{color:#22c55e;}
+.amber{color:#f59e0b;}
+.red{color:#ef4444;}
+.risk-bar{height:10px;border-radius:10px;margin-top:14px;background:linear-gradient(90deg,#22c55e 0%,#f59e0b 50%,#ef4444 100%);position:relative;}
+.pointer{position:absolute;top:-4px;width:4px;height:18px;background:white;border-radius:2px;}
+.stats{display:flex;justify-content:space-between;margin-top:25px;}
+.stat{flex:1;text-align:center;}
+.stat-value{font-size:22px;font-weight:700;}
+.stat-label{font-size:12px;color:#9fb0d6;}
+.alert-note{margin-top:18px;text-align:center;font-size:13px;color:#9fb0d6;line-height:1.5;}
+.paywall{margin-top:25px;background:#071026;border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,0.06);}
+.paywall h2{font-size:18px;margin-bottom:12px;}
+.paywall ul{list-style:none;display:grid;gap:8px;margin-bottom:14px;font-size:14px;color:#c7d2ef;}
+.trust{text-align:center;font-size:13px;color:#9fb0d6;margin-bottom:6px;}
+.price{text-align:center;font-size:22px;font-weight:700;margin-bottom:6px;}
+.currency{text-align:center;font-size:13px;color:#9fb0d6;margin-bottom:4px;}
+.payment-note{text-align:center;font-size:13px;color:#9fb0d6;margin-bottom:12px;}
+.tease{font-size:13px;text-align:center;margin-bottom:10px;color:#9fb0d6;}
+.footer{margin-top:16px;font-size:11px;text-align:center;color:#7c88a6;}
+.report-list{margin-top:12px;display:grid;gap:10px;}
+.report-item{background:#071026;padding:12px;border-radius:8px;font-size:14px;color:#c7d2ef;border:1px solid rgba(255,255,255,0.05);}
 </style>
-
 </head>
 
 <body>
-
 <div class="container">
 
-<!-- SCREEN 1 -->
-<div id="screen1" class="screen active">
-
-<div class="logo">
-justcheckit
+<div class="logo-wrap">
+<div class="logo">JustCheckIt</div>
 <div class="logo-line"></div>
 </div>
 
-<div class="tagline">
-Check before you send money
+<!-- SCREEN 1 -->
+<div id="screen1">
+<h1>The First Step Before Sending Money</h1>
+<div class="sub">Check for warning signs before you trust someone online.</div>
+<div class="card">
+<input id="searchInput" class="search" placeholder="Phone number, email, name, username, or payment reference">
+<button onclick="runCheck()">Run Check</button>
+<div class="promises">
+<div>✓ No signup</div>
+<div>✓ No Google login</div>
+<div>✓ No subscription</div>
 </div>
-
-<div class="subtext">
-Paste a name, phone number, email, or payment reference.<br><br>
-We review publicly visible information people often miss before sending a payment.
 </div>
-
-<input class="input" id="identifier"
-placeholder="Name, phone number, email, or payment reference"/>
-
-<button class="button" onclick="startCheck()">
-Check now
-</button>
-
-<div class="note">
-No signup • No Google login • No subscriptions
-</div>
-
-<div class="disclaimer">
-Informational context only. Not advice or conclusions.
-</div>
-
 </div>
 
 <!-- SCREEN 2 -->
-
-<div id="screen2" class="screen">
-<div class="logo">justcheckit<div class="logo-line"></div></div>
-<div class="tagline">Checking before you send money</div>
-<div class="subtext">Reviewing publicly available information</div>
-
-<div class="scan-list">
-<div class="scan-item" id="scan1">✓ Checking web presence</div>
-<div class="scan-item" id="scan2">✓ Searching public discussions</div>
-<div class="scan-item" id="scan3">✓ Reviewing business records</div>
-<div class="scan-item" id="scan4">✓ Looking for risk indicators</div>
-</div>
-
-<div class="progress"><div class="progress-bar"></div></div>
-
-<div class="note">
-This usually takes a few seconds
+<div id="screen2" class="hidden">
+<div class="card scan-box">
+<h1>Running safety checks</h1>
+<div class="sub">Looking for warning signs across public sources</div>
+<div class="loader"></div>
 </div>
 </div>
 
 <!-- SCREEN 3 -->
-
-<div id="screen3" class="screen">
-
-<div class="logo">justcheckit<div class="logo-line"></div></div>
-
-<div class="tagline">
-We found information that could matter before you send money.
+<div id="screen3" class="hidden">
+<h1>Safety Check Complete</h1>
+<div class="card">
+<div class="identifier">Checked Identifier<br><strong id="checkedValue"></strong></div>
+<div id="riskLevel" class="risk-level amber">Some Risk Indicators</div>
+<div class="risk-bar"><div class="pointer"></div></div>
+<div class="stats">
+<div class="stat">
+<div id="warningCount" class="stat-value">0</div>
+<div class="stat-label">Potential Risk Indicators</div>
+</div>
+<div class="stat">
+<div id="riskScore" class="stat-value">0</div>
+<div class="stat-label">Risk Score</div>
+</div>
+<div class="stat">
+<div class="stat-value">✓</div>
+<div class="stat-label">External Checks Complete</div>
+</div>
 </div>
 
-<div class="subtext">
-People usually check before sending a payment.
+<div class="alert-note">
+People often run this check when they are about to send money.
 </div>
 
-<div class="subtext" id="checkedIdentifier"></div>
-
-<div id="previewScan" class="scan-preview">
-Scanning public discussions…<br>
-Checking contact traces…<br>
-Cross-referencing identity signals…
+<div class="paywall">
+<h2>Unlock Detailed Risk Report</h2>
+<ul>
+<li>✓ Public discussion mentions</li>
+<li>✓ External warning indicators</li>
+<li>✓ Web presence analysis</li>
+<li>✓ Identity pattern indicators</li>
+<li>✓ Source links and explanations</li>
+<li>✓ Deeper analysis of detected risk indicators</li>
+</ul>
+<div class="tease">Important details about these indicators are hidden in the full report.</div>
+<div class="trust">Private • Instant • Secure</div>
+<div class="price">$1.49</div>
+<div class="currency">Charged in your local currency</div>
+<div class="payment-note">One-time report • No subscription</div>
+<button onclick="startPayment()">Unlock Detailed Risk Report</button>
 </div>
-
-<div class="preview">
-
-<div class="preview-item" id="p1">
-<div class="preview-title">Mentions in public discussions</div>
-<div class="preview-bar" id="bar1"></div>
 </div>
-
-<div class="preview-item" id="p2">
-<div class="preview-title">Contact details across sources</div>
-<div class="preview-bar" id="bar2"></div>
-</div>
-
-<div class="preview-item" id="p3">
-<div class="preview-title">Identity consistency review</div>
-<div class="preview-bar" id="bar3"></div>
-</div>
-
-</div>
-
-<button class="button payButton" onclick="startPayment()">
-See the full report — $1.49
-</button>
-
-<div class="note">
-Charged in your local currency<br>
-No signup • No lock-in
-</div>
-
-<div class="disclaimer">
-Informational context only. Not advice or conclusions.
-</div>
-
 </div>
 
 <!-- SCREEN 4 -->
-<div id="screen4" class="screen">
-<div class="logo">justcheckit<div class="logo-line"></div></div>
-<div class="tagline">Verifying payment…</div>
-<div class="subtext">Preparing your report</div>
-</div>
+<div id="screen4" class="hidden"><div class="card scan-box"><h1>Verifying payment</h1><div class="sub">Preparing your report</div><div class="loader"></div></div></div>
 
 <!-- SCREEN 5 -->
-
-<div id="screen5" class="screen">
-
-<div class="logo">justcheckit<div class="logo-line"></div></div>
-
-<div class="tagline">Running deeper analysis</div>
-<div class="subtext">Cross-checking multiple public sources</div>
-
-<div class="scan-list">
-<div class="scan-item" id="r1">✓ Reviewing identity traces</div>
-<div class="scan-item" id="r2">✓ Cross-checking contact signals</div>
-<div class="scan-item" id="r3">✓ Checking discussion patterns</div>
-<div class="scan-item" id="r4">✓ Compiling report</div>
-</div>
-
-<div class="progress"><div class="progress-bar"></div></div>
-
-</div>
+<div id="screen5" class="hidden"><div class="card scan-box"><h1>Running deeper analysis</h1><div class="sub">Cross-checking multiple public sources</div><div class="loader"></div></div></div>
 
 <!-- SCREEN 6 -->
+<div id="screen6" class="hidden">
 
-<div id="screen6" class="screen">
+<h1>Your JustCheckIt Report</h1>
 
-<div class="logo">justcheckit<div class="logo-line"></div></div>
-
-<div class="tagline">Your JustCheckIt Report</div>
-
-<div class="subtext" id="checkedReportIdentifier"></div>
-
-<div class="subtext" id="summaryText"></div>
-
-<div class="preview">
-
-<div class="preview-title">Observed signals</div>
-
-<div class="preview-item visible">
-<div class="preview-title">Mentions in public discussions</div>
-<div class="preview-bar" id="final1"></div>
-<div class="indicator">
-Public online discussions referencing this identifier were observed across indexed sources.
+<div class="card">
+<div style="display:flex;justify-content:space-between;">
+<div class="identifier" style="text-align:left;">
+Identifier checked<br><strong id="reportIdentifier"></strong>
+</div>
+<div style="font-size:12px;color:#9fb0d6;">
+Report ID<br><strong id="reportId"></strong>
 </div>
 </div>
 
-<div class="preview-item visible">
-<div class="preview-title">Contact details across sources</div>
-<div class="preview-bar" id="final2"></div>
-<div class="indicator">
-This identifier appears across multiple publicly accessible web pages and listings.
+<div id="reportRiskLevel" class="risk-level amber">Some Risk Indicators</div>
+<div class="risk-bar"><div id="reportPointer" class="pointer"></div></div>
+
+<div class="stats">
+<div class="stat">
+<div id="reportWarnings" class="stat-value">0</div>
+<div class="stat-label">Warnings</div>
+</div>
+<div class="stat">
+<div id="reportScore" class="stat-value">0</div>
+<div class="stat-label">Risk Score</div>
+</div>
+<div class="stat">
+<div id="reportDiscussions" class="stat-value">0</div>
+<div class="stat-label">Discussions</div>
 </div>
 </div>
-
-<div class="preview-item visible">
-<div class="preview-title">Identity consistency review</div>
-<div class="preview-bar" id="final3"></div>
-<div class="indicator">
-We reviewed how this identifier appears across different websites to evaluate consistency.
-</div>
 </div>
 
+<div class="card"><h2>External Warning Indicators</h2><div id="warningSignals" class="report-list"></div></div>
+<div class="card"><h2>Public Discussion Mentions</h2><div id="discussionSignals" class="report-list"></div></div>
+<div class="card"><h2>Web Presence Analysis</h2><div id="presenceSignal" class="report-list"></div></div>
+<div class="card"><h2>Identity Pattern Indicators</h2><div id="identitySignals" class="report-list"></div></div>
+<div class="card"><h2>Source & Evidence</h2><div id="sourceSignals" class="report-list"></div></div>
+
+<div class="card">
+<h2>What This Means Before Sending Money</h2>
+<div id="meaningText" class="report-item"></div>
 </div>
 
-<div class="report-block">
-<div class="report-title">Explanation</div>
-<div id="explanationText"></div>
+<div class="card">
+<button onclick="shareReport()">Share This Report</button>
 </div>
 
-<div class="report-block">
-<div class="report-title">Indicators</div>
-<div id="indicatorList"></div>
+<div class="card">
+<button onclick="window.location.href = window.location.pathname;">Check Another Identifier</button>
 </div>
-
-<div class="report-block">
-<div class="report-title">What this means</div>
-
-This identifier appears in publicly available information across the web.<br><br>
-
-These observations do not determine intent or identity. However, when contact details appear in multiple public discussions or listings, it can sometimes be associated with online transactions or marketplace activity.<br><br>
-
-If someone you do not know asks for money using this contact, consider verifying their identity before sending payment.
-
-</div>
-
-<div class="report-block">
-<div class="report-title">What you can do next</div>
-
-• Ask the person requesting payment for additional verification before sending money<br>
-• Request a short phone or video call to confirm their identity<br>
-• Be cautious of urgent requests or pressure to send money quickly<br>
-• Consider using payment methods that offer buyer protection
 
 </div>
 
-<div class="report-block">
-<div class="report-title">Quick payment safety checklist</div>
-
-Before sending money, consider:<br><br>
-
-☐ Have you spoken to the person directly?<br>
-☐ Does the payment request feel rushed or urgent?<br>
-☐ Are you being asked to send money to a new or different account?<br>
-☐ Are you being asked to avoid normal payment protections?<br><br>
-
-If several of these apply, it may be safer to pause and verify before sending funds.
-
-</div>
-
-<button class="button" onclick="shareCheck()">
-Know someone about to send money? Ask them to check first.
-</button>
-
-<button class="button" onclick="restart()" style="margin-top:14px;">
-Run another check
-</button>
-
-<div class="disclaimer" id="disclaimerText"></div>
-
+<div class="footer">
+JustCheckIt reviews publicly visible information. It does not make accusations.
 </div>
 
 </div>
 
 <script>
 
-let identifier="";
+let identifier=""
 
-function hideAllScreens(){
-document.querySelectorAll(".screen").forEach(s=>{
-s.classList.remove("active");
-});
-}
+async function runCheck(){
+identifier=document.getElementById("searchInput").value
+document.getElementById("checkedValue").innerText=identifier
+document.getElementById("screen1").classList.add("hidden")
+document.getElementById("screen2").classList.remove("hidden")
 
-function startCheck(){
+const res=await fetch("/check",{method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({identifier})})
+const data=await res.json()
 
-identifier=document.getElementById("identifier").value;
+document.getElementById("screen2").classList.add("hidden")
+document.getElementById("screen3").classList.remove("hidden")
 
-if(!identifier){
-alert("Please enter something to check");
-return;
-}
+const warnings=data.externalSignalSummary?.contextual_hits || 0
+const score=data.confidence?.riskScore || 0
+const severity=data.confidence?.riskLevel || "amber"
 
-hideAllScreens();
-document.getElementById("screen2").classList.add("active");
+document.getElementById("warningCount").innerText=warnings
+document.getElementById("riskScore").innerText=score
 
-setTimeout(()=>{
-hideAllScreens();
-document.getElementById("screen3").classList.add("active");
-document.getElementById("checkedIdentifier").innerText=
-"Public information found for: "+identifier;
-runPreview();
-},4200);
+const riskLevel=document.getElementById("riskLevel")
+riskLevel.classList.remove("green","amber","red")
 
-}
+if(severity==="green"){riskLevel.classList.add("green");riskLevel.innerText="Low Risk Indicators"}
+if(severity==="amber"){riskLevel.classList.add("amber");riskLevel.innerText="Some Risk Indicators"}
+if(severity==="red"){riskLevel.classList.add("red");riskLevel.innerText="Elevated Risk Indicators"}
 
-function randomRange(min,max){
-return Math.floor(Math.random()*(max-min+1))+min;
-}
-
-function runPreview(){
-
-const v1=randomRange(20,85);
-const v2=randomRange(35,90);
-const v3=randomRange(15,70);
-
-setTimeout(()=>{
-document.getElementById("previewScan").style.display="none";
-document.getElementById("p1").classList.add("visible");
-document.getElementById("bar1").style.width=v1+"%";
-document.getElementById("p2").classList.add("visible");
-document.getElementById("bar2").style.width=v2+"%";
-document.getElementById("p3").classList.add("visible");
-document.getElementById("bar3").style.width=v3+"%";
-},2400);
-
+document.querySelector(".pointer").style.left=Math.min(100,score)+"%"
 }
 
 async function startPayment(){
-
-const res=await fetch("/pay/create",{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({identifier})
-});
-
-const data=await res.json();
-const approve=data.links.find(l=>l.rel==="approve");
-window.location.href=approve.href;
-
+const res=await fetch("/pay/create",{method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({identifier})})
+const data=await res.json()
+window.location.href=data.links.find(l=>l.rel==="approve").href
 }
 
-const params=new URLSearchParams(window.location.search);
+function shareReport(){
+const shareUrl = `${window.location.origin}${window.location.pathname}?paid=1&identifier=${encodeURIComponent(identifier)}`
+const text = `JustCheckIt Report\nIdentifier: ${identifier}\nCheck before sending money.\n${shareUrl}`
 
-if(params.get("paid")==="1" && params.get("token")){
-identifier=params.get("identifier");
-hideAllScreens();
-document.getElementById("screen4").classList.add("active");
-setTimeout(runReport,2000);
+if(navigator.share){
+navigator.share({title:"JustCheckIt Report",text:text,url:shareUrl})
+}else{
+navigator.clipboard.writeText(shareUrl)
+alert("Share link copied to clipboard")
+}
+}
+
+const params=new URLSearchParams(window.location.search)
+
+if(params.get("paid")==="1" && params.get("identifier")){
+identifier=params.get("identifier")
+document.getElementById("screen1").classList.add("hidden")
+document.getElementById("screen4").classList.remove("hidden")
+setTimeout(runReport,2000)
 }
 
 async function runReport(){
 
-hideAllScreens();
-document.getElementById("screen5").classList.add("active");
+document.getElementById("screen4").classList.add("hidden")
+document.getElementById("screen5").classList.remove("hidden")
 
-const res=await fetch("/report?identifier="+identifier);
-const data=await res.json();
+const res=await fetch("/report?identifier="+identifier)
+const data=await res.json()
 
 setTimeout(()=>{
 
-hideAllScreens();
-document.getElementById("screen6").classList.add("active");
+document.getElementById("screen5").classList.add("hidden")
+document.getElementById("screen6").classList.remove("hidden")
 
-document.getElementById("checkedReportIdentifier").innerText=
-"Identifier checked: "+identifier;
+document.getElementById("reportIdentifier").innerText=identifier
+document.getElementById("reportId").innerText="JC-"+Math.random().toString(36).substring(2,8).toUpperCase()
 
-document.getElementById("final1").style.width=data.public_mentions+"%";
-document.getElementById("final2").style.width=data.contact_signals+"%";
-document.getElementById("final3").style.width=data.identity_score+"%";
+const score=data.confidence?.riskScore || 0
+const severity=data.confidence?.riskLevel || "amber"
 
-document.getElementById("summaryText").innerText=data.summary;
-document.getElementById("explanationText").innerText=data.explanation;
+document.getElementById("reportScore").innerText=score
+document.getElementById("reportWarnings").innerText=data.externalSignalSummary?.warning_mentions_count || 0
+document.getElementById("reportDiscussions").innerText=data.externalSignalSummary?.discussion_mentions_count || 0
 
-let html="";
-data.indicators.forEach(i=>{
-if(i.message){
-html+="<div class='indicator'>• "+i.message+"</div>";
-}
-});
+document.getElementById("reportPointer").style.left=Math.min(100,score)+"%"
 
-document.getElementById("indicatorList").innerHTML=html;
-document.getElementById("disclaimerText").innerText=data.disclaimer;
+const riskLevel=document.getElementById("reportRiskLevel")
+riskLevel.classList.remove("green","amber","red")
 
-},3500);
+if(severity==="green"){riskLevel.classList.add("green");riskLevel.innerText="Low Risk Indicators"}
+if(severity==="amber"){riskLevel.classList.add("amber");riskLevel.innerText="Some Risk Indicators"}
+if(severity==="red"){riskLevel.classList.add("red");riskLevel.innerText="Elevated Risk Indicators"}
 
-}
+const summary = data.externalSignalSummary || {}
+const raw = summary.signals || []
 
-function shareCheck(){
-
-const url=window.location.origin;
-
-if(navigator.share){
-navigator.share({
-title:"JustCheckIt",
-text:"Know someone about to send money? Ask them to check first.",
-url:url
-});
-}else{
-navigator.clipboard.writeText(url);
-alert("Link copied. Share it with someone who might need it.");
+function clean(t){
+if(!t) return ""
+return t.replace(/https?:\/\/\S+/g,"").replace(/\s+/g," ").trim().slice(0,180)
 }
 
-}
+const examples = raw.slice(0,3).map(r =>
+`<div class="report-item">Example linked to ${identifier}:<br><br>${clean(r.text)}</div>`
+).join("")
 
-function restart(){
-location.href="/";
+document.getElementById("warningSignals").innerHTML =
+examples || `<div class="report-item">No warning-related examples were found for ${identifier}.</div>`
+
+document.getElementById("discussionSignals").innerHTML =
+`<div class="report-item">This identifier (${identifier}) appears in ${summary.discussion_mentions_count || 0} public discussions.</div>`
+
+document.getElementById("presenceSignal").innerHTML =
+`<div class="report-item">${summary.has_web_presence
+? `This identifier (${identifier}) appears across public sources.`
+: `No strong public presence found for this identifier (${identifier}).`}</div>`
+
+document.getElementById("identitySignals").innerHTML =
+(data.indicators||[]).map(i=>`<div class="report-item">${i.message}</div>`).join("") ||
+`<div class="report-item">No unusual patterns detected.</div>`
+
+document.getElementById("sourceSignals").innerHTML =
+`<div class="report-item">Based on publicly available data and aggregated online references. Specific sources are not shown.</div>`
+
+document.getElementById("meaningText").innerText =
+(data.narrative?.what_this_means || "") + "\n\n" + (data.narrative?.what_to_do || "")
+
+},3000)
 }
 
 </script>
-
 </body>
 </html>

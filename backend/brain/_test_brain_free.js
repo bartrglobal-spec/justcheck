@@ -1,15 +1,34 @@
-const { runBrain } = require("./index");
+const runBrain = require("./runBrain").default;
 
-async function test(input) {
-  const report = await runBrain(input);
-  console.log("\n==============================");
-  console.log("INPUT:", input);
-  console.log("OUTPUT:");
-  console.log(JSON.stringify(report, null, 2));
+function cleanReport(report) {
+  return {
+    identifier: report.identifier,
+    score: report.score,
+    risk: report.severity,
+    indicators: report.contextual_hits,
+
+    external: {
+      warning_mentions: report.externalSignalSummary?.warning_mentions_count || 0,
+      discussion_mentions: report.externalSignalSummary?.discussion_mentions_count || 0,
+      strength: report.externalSignalSummary?.signal_strength || "none"
+    }
+  };
 }
 
-(async () => {
-  await test({ identifier: "0647470911", identifier_type: "phone" });
-  await test({ identifier: "1111", identifier_type: "phone" });
-  await test({ identifier: "test@example.com", identifier_type: "email" });
-})();
+async function run() {
+
+  const input = {
+    identifier: "1 (866) 738-0691",
+    identifier_type: "phone",
+    paid: false
+  };
+
+  const result = await runBrain(input);
+
+  console.log("\n========== CLEAN RESULT ==========");
+  console.log(cleanReport(result));
+  console.log("=================================\n");
+
+}
+
+run();

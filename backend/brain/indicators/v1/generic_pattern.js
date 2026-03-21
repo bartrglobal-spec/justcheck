@@ -1,17 +1,16 @@
 /**
- * GENERIC PATTERN — v1
- * --------------------
- * Lightweight structural pattern presence signal.
- * Neutral informational signal.
+ * Indicator: generic_pattern
+ * --------------------------
+ * Lightweight structural pattern presence indicator.
+ * Neutral informational observation about identifier structure.
  */
 
 export default {
   id: "generic_pattern",
-  type: "signal",
-  weight: 1,
+  order: 30,
 
-  evaluate(context = {}) {
-    const { identifier } = context;
+  run(brain) {
+    const { identifier } = brain;
 
     if (typeof identifier !== "string") return null;
 
@@ -19,12 +18,11 @@ export default {
 
     if (normalized.length === 0) return null;
 
-    // Very weak generic presence signal
+    // Very weak structural observation
     if (normalized.length > 6) {
       return {
-        triggered: true,
-        score: 0, // neutral (does not affect risk score)
-        reason: "Public pattern presence observed"
+        level: "green",
+        code: "FIRST_SEEN_RECENT"
       };
     }
 

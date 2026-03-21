@@ -28,17 +28,21 @@ export function guardInput(input = {}) {
   }
 
   // ─────────────────────────────
+  // NORMALIZE FOR DETECTION
+  // ─────────────────────────────
+
+  const compactDigits = value.replace(/[^0-9+]/g, "");
+
+  // ─────────────────────────────
   // AUTO-DETECT TYPE IF MISSING
   // ─────────────────────────────
+
   if (!identifier_type) {
 
-    // Remove spaces for detection
-    const compact = value.replace(/\s+/g, "");
-
-    // Phone detection (digits + optional +)
-    if (/^\+?[0-9]{7,15}$/.test(compact)) {
+    // Phone detection (supports international +)
+    if (/^\+?[0-9]{7,15}$/.test(compactDigits)) {
       identifier_type = "phone";
-      value = compact.replace(/^\+/, ""); // remove leading +
+      value = compactDigits; // keep + if present
     }
 
     // Email
@@ -76,9 +80,19 @@ export function guardInput(input = {}) {
   // ─────────────────────────────
 
   if (type === "phone") {
-    if (!/^[0-9]{7,15}$/.test(value)) {
+
+    const digits = value.replace(/[^\d]/g, "");
+
+    if (!/^[0-9]{7,15}$/.test(digits)) {
       response.reason = "INVALID_PHONE_FORMAT";
       return response;
+    }
+
+    // Preserve international format if user entered +
+    if (value.startsWith("+")) {
+      value = "+" + digits;
+    } else {
+      value = digits;
     }
   }
 

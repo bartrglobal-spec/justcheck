@@ -59,6 +59,41 @@ const INDICATOR_REGISTRY = {
     internal_reason: "Public lookup sources returned no results"
   },
 
+  // ===== PUBLIC WEB DISCUSSION INDICATORS =====
+
+  MULTIPLE_PUBLIC_WARNINGS: {
+    code: "MULTIPLE_PUBLIC_WARNINGS",
+    category: "context",
+    level: "red",
+    weight: 4,
+    user_text:
+      "This identifier appears repeatedly in public sources alongside strong warning or scam-related language.",
+    internal_reason:
+      "Multiple public sources contain warning or scam-related discussion"
+  },
+
+  PUBLIC_WARNING_LANGUAGE: {
+    code: "PUBLIC_WARNING_LANGUAGE",
+    category: "context",
+    level: "amber",
+    weight: 2,
+    user_text:
+      "Public discussions referencing this identifier contain cautionary or warning-style language.",
+    internal_reason:
+      "Some public sources contain warning-related wording"
+  },
+
+  PUBLIC_MENTIONS_PRESENT: {
+    code: "PUBLIC_MENTIONS_PRESENT",
+    category: "context",
+    level: "green",
+    weight: 1,
+    user_text:
+      "This identifier appears in public search results, indicating some observable external presence.",
+    internal_reason:
+      "Public search results contain references to the identifier"
+  },
+
   // ===== PHONE FORMAT / PATTERN INDICATORS =====
 
   PHONE_TOO_SHORT: {

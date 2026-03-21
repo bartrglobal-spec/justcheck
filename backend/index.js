@@ -83,7 +83,11 @@ app.get("/report", async (req, res) => {
 
     const report = formatPaidReport(brainResult);
 
-    return res.json(report);
+    return res.json({
+      ...report,
+      externalSignalSummary: brainResult.externalSignalSummary,
+      externalSignalRaw: brainResult.externalSignalRaw || []
+    });
 
   } catch (err) {
 
@@ -124,6 +128,13 @@ app.get("/firecrawl-test", async (req, res) => {
 
   }
 
+});
+
+/**
+ * ROOT ROUTE (ADDED FOR RENDER)
+ */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {

@@ -1,67 +1,163 @@
-const fs = require("fs");
-const path = require("path");
+// ---------------------------------------------------
+// JustCheckIt Signal Engine
+// Runs all detection signals and returns results
+// ---------------------------------------------------
 
-const STORE_PATH = path.resolve(__dirname, "publicSignals.json");
+import usernamePatternSignals from "./usernamePatternSignals.js";
+import paymentReferenceSignals from "./paymentReferenceSignals.js";
+import domainPatternSignals from "./domainPatternSignals.js";
+import emailPatternSignals from "./emailPatternSignals.js";
+import phonePatternSignals from "./phonePatternSignals.js";
+import crossIdentifierSignals from "./crossIdentifierSignals.js";
+import urlStructureSignals from "./urlStructureSignals.js";
+import randomStringSignals from "./randomStringSignals.js";
+import messageUrgencySignals from "./messageUrgencySignals.js";
+import courierPickupSignals from "./courierPickupSignals.js";
+import webPresenceSignal from "./webPresenceSignal.js";
+import webSignal from "./webSignal.js";
 
-// -----------------------------
-// Load store
-// -----------------------------
-function loadStore() {
-  if (!fs.existsSync(STORE_PATH)) {
-    return {};
+// ---------------------------------------------------
+// Helper: safely run signal modules
+// ---------------------------------------------------
+
+async function runModule(moduleFn, input) {
+
+  try {
+
+    const result = await moduleFn(input);
+
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+
+  } catch (err) {
+
+    console.error("Signal Module Error:", err);
+    return [];
+
   }
 
-  const raw = fs.readFileSync(STORE_PATH);
-  return JSON.parse(raw);
 }
 
-// -----------------------------
-// Save store
-// -----------------------------
-function saveStore(store) {
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
+// ---------------------------------------------------
+// Remove duplicate signals
+// ---------------------------------------------------
+
+function dedupeSignals(signals) {
+
+  const seen = new Set();
+
+  return signals.filter(signal => {
+
+    const key = signal.type + signal.title;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+
+  });
+
 }
 
-// -----------------------------
-// Get + Update Signals
-// -----------------------------
-function getPublicSignals(identifier) {
-  const store = loadStore();
+// ---------------------------------------------------
+// Multi Signal Escalation
+// ---------------------------------------------------
 
-  const now = Date.now();
+function applyMultiSignalEscalation(signals) {
 
-  if (!store[identifier]) {
-    store[identifier] = {
-      total_checks: 0,
-      first_seen: now,
-      last_seen: now,
-      history: []
-    };
+  const amberSignals = signals.filter(s => s.level === "amber");
+  const redSignals = signals.filter(s => s.level === "red");
+
+  const hasCluster = signals.some(s => s.type === "multi_signal_cluster");
+
+  if (!hasCluster) {
+
+    if (amberSignals.length >= 3) {
+
+      signals.push({
+        type: "multi_signal_cluster",
+        level: "red",
+        title: "Multiple Risk Patterns Detected",
+        explanation:
+          "Several independent pattern signals were detected for this identifier.",
+        confidence: 0.72
+      });
+
+    }
+
+    if (amberSignals.length >= 2 && redSignals.length >= 1) {
+
+      signals.push({
+        type: "multi_signal_cluster",
+        level: "red",
+        title: "Clustered Risk Indicators",
+        explanation:
+          "Multiple different signal types were detected together for this identifier.",
+        confidence: 0.75
+      });
+
+    }
+
   }
 
-  // Update counters
-  store[identifier].total_checks += 1;
-  store[identifier].last_seen = now;
-  store[identifier].history.push(now);
+  return signals;
 
-  // Clean history older than 24h
-  const DAY = 24 * 60 * 60 * 1000;
-  store[identifier].history = store[identifier].history.filter(
-    ts => now - ts <= DAY
-  );
-
-  const checks_last_24h = store[identifier].history.length;
-
-  saveStore(store);
-
-  return {
-    total_checks: store[identifier].total_checks,
-    first_seen: store[identifier].first_seen,
-    last_seen: store[identifier].last_seen,
-    checks_last_24h
-  };
 }
 
-module.exports = {
-  getPublicSignals
-};
+// ---------------------------------------------------
+// Run Signal Engine
+// ---------------------------------------------------
+
+async function runSignalEngine(input) {
+
+  const signals = [];
+
+  const moduleResults = await Promise.all([
+
+    runModule(usernamePatternSignals, input),
+    runModule(paymentReferenceSignals, input),
+    runModule(domainPatternSignals, input),
+    runModule(emailPatternSignals, input),
+    runModule(phonePatternSignals, input),
+    runModule(crossIdentifierSignals, input),
+    runModule(urlStructureSignals, input),
+    runModule(randomStringSignals, input),
+    runModule(messageUrgencySignals, input),
+    runModule(courierPickupSignals, input),
+    runModule(webPresenceSignal, input),
+    runModule(webSignal, input)
+
+  ]);
+
+  moduleResults.forEach(result => {
+    signals.push(...result);
+  });
+
+  const uniqueSignals = dedupeSignals(signals);
+
+  const escalatedSignals = applyMultiSignalEscalation(uniqueSignals);
+
+  if (process.env.DEBUG_SIGNALS === "true") {
+
+    console.log("---- JustCheckIt Signal Engine ----");
+    console.log("Input:", input);
+    console.log("Signals detected:", escalatedSignals.length);
+    console.log(escalatedSignals);
+    console.log("-----------------------------------");
+
+  }
+
+  return escalatedSignals;
+
+}
+
+// ---------------------------------------------------
+// EXPORT (THIS FIXES YOUR ERROR)
+// ---------------------------------------------------
+
+export default runSignalEngine;

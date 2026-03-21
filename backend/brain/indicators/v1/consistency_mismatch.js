@@ -1,19 +1,16 @@
 /**
- * consistency_mismatch — v1
- *
- * Structural-only heuristic.
- * RAW input only.
- * Boolean output.
- * Non-judgmental.
+ * Indicator: consistency_mismatch
+ * --------------------------------
+ * Structural heuristic detecting mixed letters and numbers
+ * in unusually short identifiers.
  */
 
 export default {
   id: "consistency_mismatch",
-  type: "signal",        // explicit type for clarity
-  weight: 2,
+  order: 35,
 
-  evaluate(context) {
-    const { identifier } = context;
+  run(brain) {
+    const { identifier } = brain;
 
     if (typeof identifier !== "string") return null;
 
@@ -29,9 +26,8 @@ export default {
     if (!triggered) return null;
 
     return {
-      triggered: true,
-      score: this.weight,
-      reason: "Short identifier contains mixed letters and numbers"
+      level: "amber",
+      code: "NEVER_SEEN_BEFORE"
     };
   }
 };

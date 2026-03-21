@@ -1,17 +1,16 @@
 /**
- * SHORT IDENTIFIER INDICATOR — v1
- * --------------------------------
- * Flags unusually short identifiers.
- * Structural only.
+ * Indicator: short_identifier
+ * ---------------------------
+ * Flags identifiers that are unusually short for their type.
+ * Structural pattern only.
  */
 
 export default {
   id: "short_identifier",
-  type: "signal",
-  weight: 2,
+  order: 20,
 
-  evaluate(context = {}) {
-    const { identifier, identifier_type } = context;
+  run(brain) {
+    const { identifier, identifier_type } = brain;
 
     if (typeof identifier !== "string") return null;
 
@@ -32,9 +31,8 @@ export default {
 
     if (length < minLength) {
       return {
-        triggered: true,
-        score: this.weight,
-        reason: "Identifier unusually short for its type"
+        level: "amber",
+        code: "PHONE_TOO_SHORT"
       };
     }
 
