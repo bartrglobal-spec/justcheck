@@ -1,25 +1,19 @@
-self.addEventListener("install", event => {
-  self.skipWaiting();
-});
+self.addEventListener("install", () => self.skipWaiting());
 
-self.addEventListener("activate", event => {
-  return self.clients.claim();
-});
+self.addEventListener("activate", () => self.clients.claim());
 
-self.addEventListener("fetch", event => {
-  const url = new URL(event.request.url);
-
-  // 🚨 DO NOT TOUCH API CALLS
-  if (url.pathname.startsWith("/check") || 
-      url.pathname.startsWith("/report") || 
-      url.pathname.startsWith("/pay")) {
-    return; // let browser handle normally
+self.addEventListener("fetch", (event) => {
+  // ONLY cache static assets (not API)
+  if (
+    event.request.method !== "GET" ||
+    event.request.url.includes("/check") ||
+    event.request.url.includes("/report") ||
+    event.request.url.includes("/pay")
+  ) {
+    return; // never touch API
   }
 
-  // Basic cache-first for static files only
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
