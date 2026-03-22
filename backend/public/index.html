@@ -325,8 +325,19 @@ document.getElementById("sourceSignals").innerHTML =
 document.getElementById("meaningText").innerText =
 (data.narrative?.what_this_means || "") + "\n\n" + (data.narrative?.what_to_do || "")
 
+ment.getElementById("sourceSignals").innerHTML =
+`<div class="report-item">Based on publicly available data and aggregated online references. Specific sources are not shown.</div>`
+
+document.getElementById("meaningText").innerText =
+(data.narrative?.what_this_means || "") + "\n\n" + (data.narrative?.what_to_do || "")
+
+document.getElementById("meaningText").innerText =
+(data.narrative?.what_this_means || "") + "\n\n" + (data.narrative?.what_to_do || "")
+
 },3000)
 }
+
+</script> <!-- ✅ THIS WAS MISSING -->
 
 <script>
 if ("serviceWorker" in navigator) {
